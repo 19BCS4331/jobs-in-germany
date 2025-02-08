@@ -1,30 +1,47 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Calendar, User, ArrowRight } from 'lucide-react';
+import { getBlogPosts, type BlogPost } from '../lib/api';
+import { format } from 'date-fns';
 
 function Blog() {
-  const posts = [
-    {
-      title: 'The Complete Guide to Job Hunting in Germany',
-      excerpt: 'Everything you need to know about finding your dream job in Germany, from preparation to acceptance.',
-      author: 'Sarah Schmidt',
-      date: 'March 15, 2024',
-      image: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=800'
-    },
-    {
-      title: 'Understanding German Work Culture',
-      excerpt: 'Learn about the unique aspects of German workplace culture and how to thrive in it.',
-      author: 'Michael Weber',
-      date: 'March 12, 2024',
-      image: 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&q=80&w=800'
-    },
-    {
-      title: 'Top Tech Companies in Germany for 2024',
-      excerpt: 'Discover the most innovative and employee-friendly tech companies in Germany.',
-      author: 'Thomas Mueller',
-      date: 'March 10, 2024',
-      image: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&q=80&w=800'
-    }
-  ];
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        const data = await getBlogPosts();
+        setPosts(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load blog posts');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPosts();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 pt-24 flex justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 pt-24">
+        <div className="container mx-auto px-6">
+          <div className="bg-red-50 text-red-600 p-4 rounded-lg">
+            {error}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pt-24">
@@ -32,10 +49,10 @@ function Blog() {
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Career Insights</h1>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {posts.map((post, index) => (
-            <article key={index} className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition">
+          {posts.map((post) => (
+            <article key={post.id} className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition">
               <img
-                src={post.image}
+                src={post.image_url}
                 alt={post.title}
                 className="w-full h-48 object-cover"
               />
@@ -49,12 +66,12 @@ function Blog() {
                 <div className="flex items-center text-sm text-gray-500 mb-4">
                   <div className="flex items-center">
                     <User className="w-4 h-4 mr-1" />
-                    {post.author}
+                    Author
                   </div>
                   <div className="mx-2">•</div>
                   <div className="flex items-center">
                     <Calendar className="w-4 h-4 mr-1" />
-                    {post.date}
+                    {format(new Date(post.published_at), 'MMMM d, yyyy')}
                   </div>
                 </div>
                 <button className="flex items-center text-blue-600 font-medium hover:text-blue-700 transition">

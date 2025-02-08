@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { signIn, signUp, AuthError } from '../lib/auth';
+import { useNavigate } from 'react-router-dom';
 
 type AuthMode = 'signin' | 'signup';
+type UserType = 'job_seeker' | 'employer';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -12,9 +14,11 @@ interface AuthModalProps {
 }
 
 export default function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModalProps) {
+  const navigate = useNavigate();
   const [mode, setMode] = useState<AuthMode>(defaultMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [userType, setUserType] = useState<UserType>('job_seeker');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<AuthError | null>(null);
   const [success, setSuccess] = useState('');
@@ -29,7 +33,7 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: A
 
     try {
       if (mode === 'signup') {
-        await signUp(email, password);
+        await signUp(email, password, userType);
         setSuccess('Account created successfully! Please check your email to verify your account.');
         toast.success('Account created! Please check your email.', {
           duration: 4000,
@@ -41,8 +45,14 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: A
             borderRadius: '8px',
           },
         });
+        // Redirect based on user type
+        if (userType === 'employer') {
+          navigate('/company/new');
+        } else {
+          navigate('/profile');
+        }
       } else {
-        await signIn(email, password);
+        const { user } = await signIn(email, password);
         toast.success('Welcome back!', {
           duration: 3000,
           position: 'bottom-right',
@@ -56,17 +66,11 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: A
         });
         onClose();
       }
-    } catch (err: any) {
-      setError(err);
-      toast.error(err.message || 'Authentication failed', {
-        duration: 3000,
+    } catch (err) {
+      setError(err as AuthError);
+      toast.error(err instanceof Error ? err.message : 'An error occurred', {
+        duration: 4000,
         position: 'bottom-right',
-        style: {
-          background: '#EF4444',
-          color: '#fff',
-          padding: '12px 24px',
-          borderRadius: '8px',
-        },
       });
     } finally {
       setLoading(false);
@@ -74,35 +78,32 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: A
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 relative animate-scale-in">
-        <button
-          onClick={onClose}
-          className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 transition-colors"
-        >
-          <X className="w-5 h-5" />
-        </button>
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="flex min-h-screen items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-25" onClick={onClose}></div>
+        
+        <div className="relative w-full max-w-md rounded-lg bg-white p-8 shadow-lg">
+          <button
+            onClick={onClose}
+            className="absolute right-4 top-4 text-gray-400 hover:text-gray-500"
+          >
+            <X className="h-5 w-5" />
+          </button>
 
-        <div className="p-8">
-          <h2 className="text-2xl font-bold text-center mb-6">
-            {mode === 'signin' ? 'Welcome Back' : 'Create Account'}
-          </h2>
-
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
-              {error.message}
-            </div>
-          )}
-
-          {success && (
-            <div className="mb-4 p-3 bg-green-50 text-green-700 rounded-lg text-sm">
-              {success}
-            </div>
-          )}
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">
+              {mode === 'signin' ? 'Welcome back' : 'Create an account'}
+            </h2>
+            <p className="mt-1 text-sm text-gray-500">
+              {mode === 'signin'
+                ? 'Sign in to your account to continue'
+                : 'Sign up to start your journey'}
+            </p>
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                 Email
               </label>
               <input
@@ -110,14 +111,13 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: A
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 required
-                placeholder="you@example.com"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                 Password
               </label>
               <input
@@ -125,51 +125,85 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: A
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 required
-                minLength={6}
-                placeholder="••••••••"
               />
             </div>
+
+            {mode === 'signup' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  I am a...
+                </label>
+                <div className="mt-2 grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setUserType('job_seeker')}
+                    className={`flex items-center justify-center rounded-md border px-4 py-2 text-sm font-medium ${
+                      userType === 'job_seeker'
+                        ? 'border-blue-600 bg-blue-50 text-blue-600'
+                        : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    Job Seeker
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setUserType('employer')}
+                    className={`flex items-center justify-center rounded-md border px-4 py-2 text-sm font-medium ${
+                      userType === 'employer'
+                        ? 'border-blue-600 bg-blue-50 text-blue-600'
+                        : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    Employer
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {error && (
+              <div className="rounded-md bg-red-50 p-4 text-sm text-red-600">
+                {error.message}
+              </div>
+            )}
+
+            {success && (
+              <div className="rounded-md bg-green-50 p-4 text-sm text-green-600">
+                {success}
+              </div>
+            )}
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 text-white py-2 rounded-lg font-medium transition-all duration-200 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full rounded-md bg-blue-600 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
             >
-              {loading ? (
-                <span className="flex items-center justify-center">
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Processing...
-                </span>
-              ) : mode === 'signin' ? 'Sign In' : 'Create Account'}
+              {loading ? 'Loading...' : mode === 'signin' ? 'Sign In' : 'Sign Up'}
             </button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-gray-600">
+          <div className="mt-6 text-center text-sm">
             {mode === 'signin' ? (
-              <>
+              <p className="text-gray-500">
                 Don't have an account?{' '}
                 <button
                   onClick={() => setMode('signup')}
-                  className="text-blue-600 font-medium hover:text-blue-700 focus:outline-none focus:underline transition-colors"
+                  className="font-medium text-blue-600 hover:text-blue-500"
                 >
                   Sign up
                 </button>
-              </>
+              </p>
             ) : (
-              <>
+              <p className="text-gray-500">
                 Already have an account?{' '}
                 <button
                   onClick={() => setMode('signin')}
-                  className="text-blue-600 font-medium hover:text-blue-700 focus:outline-none focus:underline transition-colors"
+                  className="font-medium text-blue-600 hover:text-blue-500"
                 >
                   Sign in
                 </button>
-              </>
+              </p>
             )}
           </div>
         </div>

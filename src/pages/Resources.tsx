@@ -1,54 +1,62 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { FileText, Book, GraduationCap, Briefcase } from 'lucide-react';
+import { getResources, type Resource } from '../lib/api';
+
+const iconMap = {
+  FileText: <FileText className="w-6 h-6" />,
+  Book: <Book className="w-6 h-6" />,
+  GraduationCap: <GraduationCap className="w-6 h-6" />,
+  Briefcase: <Briefcase className="w-6 h-6" />
+};
 
 function Resources() {
-  const resources = [
-    {
-      category: 'Visa & Work Permits',
-      items: [
-        {
-          title: 'German Work Visa Guide',
-          description: 'Complete guide to obtaining a work visa in Germany.',
-          icon: <FileText className="w-6 h-6" />
-        },
-        {
-          title: 'Blue Card Information',
-          description: 'Everything you need to know about the EU Blue Card.',
-          icon: <FileText className="w-6 h-6" />
-        }
-      ]
-    },
-    {
-      category: 'Language & Culture',
-      items: [
-        {
-          title: 'German Language Resources',
-          description: 'Free and paid resources for learning German.',
-          icon: <Book className="w-6 h-6" />
-        },
-        {
-          title: 'Cultural Integration Guide',
-          description: 'Tips for adapting to German work culture.',
-          icon: <Book className="w-6 h-6" />
-        }
-      ]
-    },
-    {
-      category: 'Career Development',
-      items: [
-        {
-          title: 'CV Writing Guide',
-          description: 'How to write a German-style CV and cover letter.',
-          icon: <GraduationCap className="w-6 h-6" />
-        },
-        {
-          title: 'Interview Preparation',
-          description: 'Common interview questions and best practices.',
-          icon: <Briefcase className="w-6 h-6" />
-        }
-      ]
+  const [resources, setResources] = useState<Resource[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchResources = async () => {
+      try {
+        const data = await getResources();
+        setResources(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load resources');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchResources();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 pt-24 flex justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 pt-24">
+        <div className="container mx-auto px-6">
+          <div className="bg-red-50 text-red-600 p-4 rounded-lg">
+            {error}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Group resources by category
+  const resourcesByCategory = resources.reduce<Record<string, Resource[]>>((acc, resource) => {
+    if (!acc[resource.category]) {
+      acc[resource.category] = [];
     }
-  ];
+    acc[resource.category].push(resource);
+    return acc;
+  }, {});
 
   return (
     <div className="min-h-screen bg-gray-50 pt-24">
@@ -56,15 +64,15 @@ function Resources() {
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Resources</h1>
         
         <div className="space-y-12">
-          {resources.map((category, index) => (
-            <div key={index}>
-              <h2 className="text-2xl font-semibold text-gray-800 mb-6">{category.category}</h2>
+          {Object.entries(resourcesByCategory).map(([category, items]) => (
+            <div key={category}>
+              <h2 className="text-2xl font-semibold text-gray-800 mb-6">{category}</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {category.items.map((item, itemIndex) => (
-                  <div key={itemIndex} className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition cursor-pointer">
+                {items.map((item) => (
+                  <div key={item.id} className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition cursor-pointer">
                     <div className="flex items-start gap-4">
                       <div className="text-blue-600">
-                        {item.icon}
+                        {iconMap[item.icon as keyof typeof iconMap]}
                       </div>
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900">{item.title}</h3>
