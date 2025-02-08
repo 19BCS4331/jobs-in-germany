@@ -6,42 +6,49 @@ export interface AuthError {
 }
 
 export async function signUp(email: string, password: string, userType: 'job_seeker' | 'employer') {
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-  });
+  try {
+    // Sign up the user
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+    });
 
-  if (error) {
-    throw {
-      message: error.message,
-      status: error.status,
-    };
+    if (authError) {
+      throw {
+        message: authError.message,
+        status: authError.status,
+      };
+    }
+
+    if (!authData.user) {
+      throw {
+        message: 'Failed to create user',
+        status: 500,
+      };
+    }
+
+    // Create the profile directly
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .insert({
+        id: authData.user.id,
+        email: email,
+        user_type: userType,
+      });
+
+    if (profileError) {
+      console.error('Profile creation error:', profileError);
+      throw {
+        message: 'Failed to create user profile: ' + profileError.message,
+        status: profileError.code,
+      };
+    }
+
+    return authData;
+  } catch (err) {
+    console.error('Signup error:', err);
+    throw err;
   }
-
-  if (!data.user) {
-    throw {
-      message: 'Failed to create user',
-      status: 500,
-    };
-  }
-
-  // Create profile with user type
-  const { error: profileError } = await supabase.from('profiles').insert({
-    id: data.user.id,
-    email: email,
-    user_type: userType,
-  });
-
-  if (profileError) {
-    // If profile creation fails, we should delete the auth user
-    await supabase.auth.admin.deleteUser(data.user.id);
-    throw {
-      message: 'Failed to create user profile',
-      status: 500,
-    };
-  }
-
-  return data;
 }
 
 export async function signIn(email: string, password: string) {
@@ -51,6 +58,7 @@ export async function signIn(email: string, password: string) {
   });
 
   if (error) {
+    console.error('Sign in error:', error);
     throw {
       message: error.message,
       status: error.status,
@@ -64,6 +72,7 @@ export async function signOut() {
   const { error } = await supabase.auth.signOut();
 
   if (error) {
+    console.error('Sign out error:', error);
     throw {
       message: error.message,
       status: error.status,
@@ -77,6 +86,7 @@ export async function resetPassword(email: string) {
   });
 
   if (error) {
+    console.error('Reset password error:', error);
     throw {
       message: error.message,
       status: error.status,
@@ -90,6 +100,7 @@ export async function updatePassword(password: string) {
   });
 
   if (error) {
+    console.error('Update password error:', error);
     throw {
       message: error.message,
       status: error.status,
