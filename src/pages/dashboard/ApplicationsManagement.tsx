@@ -22,6 +22,14 @@ const statusIcons = {
 
 type ApplicationStatus = Application['status'];
 
+const formatDate = (dateString: string) => {
+  return new Date(dateString).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+};
+
 const ApplicationsManagement: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -30,6 +38,7 @@ const ApplicationsManagement: React.FC = () => {
   const [applications, setApplications] = useState<Application[]>([]);
   const [selectedJobId, setSelectedJobId] = useState<string>('');
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
 
   // Load company and jobs only once when component mounts
   useEffect(() => {
@@ -100,14 +109,6 @@ const ApplicationsManagement: React.FC = () => {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -162,67 +163,116 @@ const ApplicationsManagement: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="flex-shrink-0">
-                    <User className="h-10 w-10 text-gray-400" />
+                    {application.job?.company?.logo_url ? (
+                      <img
+                        src={application.job.company.logo_url}
+                        alt={`${application.job.company.name} logo`}
+                        className="h-10 w-10 rounded-full object-contain bg-white"
+                      />
+                    ) : (
+                      <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
+                        <Building2 className="h-6 w-6 text-gray-400" />
+                      </div>
+                    )}
                   </div>
                   <div>
                     <h3 className="text-sm font-medium text-gray-900">
-                      {application.user?.full_name || 'Unknown User'}
+                      {application.job?.title || 'Unknown Job'}
                     </h3>
-                    <p className="text-sm text-gray-500">{application.user?.email || 'No email provided'}</p>
-                    {application.user?.headline && (
-                      <p className="text-sm text-gray-500">{application.user.headline}</p>
-                    )}
+                    <p className="text-sm text-gray-500">{application.job?.company?.name || 'Unknown Company'}</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-4">
-                  <div className="flex flex-col items-end">
-                    <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[application.status]}`}>
-                      {React.createElement(statusIcons[application.status], { className: 'mr-1 h-4 w-4' })}
-                      {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
-                    </div>
-                    <span className="mt-1 text-sm text-gray-500">
-                      Applied {application.created_at ? formatDate(application.created_at) : 'Unknown date'}
-                    </span>
-                  </div>
+                  {/* Status Dropdown */}
                   <select
                     value={application.status}
                     onChange={(e) => handleStatusChange(application.id, e.target.value as ApplicationStatus)}
-                    className="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    className={`rounded-full text-xs font-medium px-3 py-1 ${statusColors[application.status]}`}
                   >
-                    <option value="pending">Pending</option>
-                    <option value="reviewing">Reviewing</option>
-                    <option value="accepted">Accepted</option>
-                    <option value="rejected">Rejected</option>
+                    {Object.keys(statusColors).map((status) => (
+                      <option key={status} value={status}>
+                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
 
               {/* Application Details */}
-              <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div className="flex items-center text-sm text-gray-500">
-                  <Building2 className="mr-1.5 h-4 w-4 flex-shrink-0" />
-                  {application.job?.title || 'Unknown Job'}
+                  <User className="mr-1.5 h-4 w-4 flex-shrink-0" />
+                  {application.user?.full_name || 'Unknown User'}
                 </div>
                 <div className="flex items-center text-sm text-gray-500">
                   <Calendar className="mr-1.5 h-4 w-4 flex-shrink-0" />
                   Applied {application.created_at ? formatDate(application.created_at) : 'Unknown date'}
                 </div>
-                {application.cover_letter && (
-                  <div className="sm:col-span-2">
-                    <div className="flex items-center text-sm text-gray-500">
+                {application.user?.resume_url && (
+                  <div className="flex items-center text-sm">
+                    <a
+                      href={application.user.resume_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center text-indigo-600 hover:text-indigo-500"
+                    >
                       <FileText className="mr-1.5 h-4 w-4 flex-shrink-0" />
-                      Cover Letter
-                    </div>
-                    <p className="mt-1 text-sm text-gray-700 whitespace-pre-wrap">
-                      {application.cover_letter}
-                    </p>
+                      View Resume
+                    </a>
                   </div>
                 )}
               </div>
+
+              {/* Cover Letter */}
+              {application.cover_letter && (
+                <div className="mt-4">
+                  <button
+                    onClick={() => setSelectedApplication(application)}
+                    className="inline-flex items-center text-sm text-indigo-600 hover:text-indigo-500"
+                  >
+                    View Cover Letter
+                  </button>
+                </div>
+              )}
             </div>
           ))
         )}
       </div>
+
+      {/* Cover Letter Modal */}
+      {selectedApplication && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex min-h-screen items-center justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            {/* Background overlay */}
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={() => setSelectedApplication(null)} />
+            
+            {/* Modal panel */}
+            <div className="relative inline-block transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left align-middle shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+              <div>
+                <div className="mt-3 text-center sm:mt-5">
+                  <h3 className="text-lg font-medium leading-6 text-gray-900">
+                    Cover Letter
+                  </h3>
+                  <div className="mt-4">
+                    <p className="text-sm text-gray-500 whitespace-pre-wrap">
+                      {selectedApplication.cover_letter}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-5 sm:mt-6">
+                <button
+                  type="button"
+                  className="inline-flex w-full justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:text-sm"
+                  onClick={() => setSelectedApplication(null)}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

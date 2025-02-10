@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, BookOpen, TrendingUp, Clock, Briefcase, CheckCircle2, XCircle, Bookmark, Star } from 'lucide-react';
+import { FileText, BookOpen, TrendingUp, Clock, Briefcase, CheckCircle2, XCircle, Bookmark, Star, User } from 'lucide-react';
 import { useAuth } from '../../lib/AuthContext';
 import { supabase } from '../../lib/supabase';
 
@@ -77,7 +77,7 @@ function JobSeekerDashboard() {
 
       // Get applications count
       const { count: applicationsCount, error: applicationsError } = await supabase
-        .from('applications')
+        .from('job_applications')
         .select('*', { count: 'exact' })
         .eq('user_id', user.id);
 
@@ -85,7 +85,7 @@ function JobSeekerDashboard() {
 
       // Get applications by status
       const { data: applicationsByStatus, error: statusError } = await supabase
-        .from('applications')
+        .from('job_applications')
         .select('status')
         .eq('user_id', user.id);
 
@@ -122,6 +122,13 @@ function JobSeekerDashboard() {
       setLoading(false);
     }
   };
+
+  const navigation = [
+    { name: 'Overview', href: '/dashboard', icon: Briefcase },
+    { name: 'My Applications', href: '/dashboard/applications', icon: FileText },
+    { name: 'Saved Jobs', href: '/dashboard/saved-jobs', icon: Bookmark },
+    { name: 'Profile Settings', href: '/dashboard/settings', icon: User },
+  ];
 
   if (loading) {
     return (

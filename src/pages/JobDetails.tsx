@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MapPin, Euro, Clock, Building2, Briefcase, Calendar, Globe, Users, ChevronLeft, Bookmark, X, Check } from 'lucide-react';
-import { getJob, type Job, applyToJob, saveJob, unsaveJob, checkIfJobApplied } from '../lib/api';
+import { Icons } from '../components/Icons';
+import { getJob, type Job, applyToJob, saveJob, unsaveJob, getSavedJobId, checkIfJobApplied } from '../lib/api';
 import { useAuth } from '../lib/AuthContext';
+import { useSavedJobs } from '../contexts/SavedJobsContext';
 import { toast } from 'react-hot-toast';
-import { supabase } from '../lib/supabase';
 
 interface ApplicationModalProps {
   job: Job;
@@ -39,7 +39,7 @@ function ApplicationModal({ job, isOpen, onClose, onSubmit }: ApplicationModalPr
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">Apply to {job.title}</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-            <X className="w-5 h-5" />
+            <Icons.X className="w-5 h-5" />
           </button>
         </div>
         <form onSubmit={handleSubmit}>
@@ -82,107 +82,74 @@ function JobDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { checkIfJobIsSaved, addSavedJob, removeSavedJob } = useSavedJobs();
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showApplyModal, setShowApplyModal] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
   const [hasApplied, setHasApplied] = useState(false);
+  const [showApplicationModal, setShowApplicationModal] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    if (id) {
-      loadJob();
-    }
+    if (!id) return;
+    loadJob();
   }, [id]);
-
-  useEffect(() => {
-    // Check if job is already saved and if user has applied
-    if (user && job) {
-      checkIfJobIsSaved();
-      checkIfUserHasApplied();
-    }
-  }, [user, job]);
 
   const loadJob = async () => {
     try {
       setLoading(true);
       const jobData = await getJob(id!);
       setJob(jobData);
+      
+      if (user) {
+        const hasAlreadyApplied = await checkIfJobApplied(id!);
+        setHasApplied(hasAlreadyApplied);
+      }
     } catch (error) {
       console.error('Error loading job:', error);
       toast.error('Failed to load job details');
+      navigate('/jobs');
     } finally {
       setLoading(false);
     }
   };
 
-  const checkIfJobIsSaved = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('saved_jobs')
-        .select('id')
-        .eq('user_id', user?.id)
-        .eq('job_id', job?.id)
-        .single();
-
-      if (!error && data) {
-        setIsSaved(true);
-      }
-    } catch (error) {
-      console.error('Error checking saved status:', error);
-    }
-  };
-
-  const checkIfUserHasApplied = async () => {
-    if (!job || !user) return;
-    const applied = await checkIfJobApplied(job.id);
-    setHasApplied(applied);
-  };
-
-  const handleSaveJob = async () => {
-    if (!user) {
+  const handleSaveJob = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!user || !job) {
       toast.error('Please sign in to save jobs');
       return;
     }
 
-    if (!job) return;
-
     try {
       setIsSaving(true);
-      if (isSaved) {
-        // Get saved job id first
-        const { data } = await supabase
-          .from('saved_jobs')
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('job_id', job.id)
-          .single();
+      const isCurrentlySaved = checkIfJobIsSaved(job.id);
 
-        if (data) {
-          await unsaveJob(data.id);
-          setIsSaved(false);
+      if (isCurrentlySaved) {
+        const savedJobId = await getSavedJobId(job.id);
+        if (savedJobId) {
+          await unsaveJob(savedJobId);
+          removeSavedJob(job.id);
           toast.success('Job removed from saved jobs');
         }
       } else {
         await saveJob(user.id, job.id);
-        setIsSaved(true);
+        addSavedJob(job.id);
         toast.success('Job saved successfully');
       }
     } catch (error) {
       console.error('Error saving job:', error);
-      toast.error(isSaved ? 'Failed to remove job' : 'Failed to save job');
+      toast.error(checkIfJobIsSaved(job.id) ? 'Failed to remove job' : 'Failed to save job');
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleApply = async () => {
+  const handleApply = () => {
     if (!user) {
       toast.error('Please sign in to apply for jobs');
-      navigate('/auth/signin');
       return;
     }
-    setShowApplyModal(true);
+    setShowApplicationModal(true);
   };
 
   const handleApplicationSubmit = async (coverLetter: string) => {
@@ -190,24 +157,16 @@ function JobDetails() {
     await applyToJob(job.id, user.id, coverLetter);
   };
 
-  if (loading) {
+  if (loading || !job) {
     return (
       <div className="min-h-screen bg-gray-50 pt-24">
-        <div className="container mx-auto px-6">
-          <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!job) {
-    return (
-      <div className="min-h-screen bg-gray-50 pt-24">
-        <div className="container mx-auto px-6">
-          <div className="bg-red-50 text-red-600 p-4 rounded-lg">
-            Job not found
+        <div className="max-w-5xl mx-auto px-4">
+          <div className="bg-white rounded-lg shadow-sm p-6 animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-3/4 mb-4"></div>
+            <div className="space-y-3">
+              <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -217,6 +176,14 @@ function JobDetails() {
   return (
     <div className="min-h-screen bg-gray-50 pt-16">
       <div className="max-w-5xl mx-auto px-4 py-8">
+        <button
+          onClick={() => navigate('/jobs')}
+          className="mb-6 inline-flex items-center text-gray-600 hover:text-gray-900"
+        >
+          <Icons.ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Jobs
+        </button>
+
         <div className="space-y-6">
           {/* Header */}
           <div className="bg-white rounded-lg shadow-sm p-6">
@@ -230,17 +197,35 @@ function JobDetails() {
                   />
                 ) : (
                   <div className="h-16 w-16 rounded-lg bg-gray-100 flex items-center justify-center">
-                    <Building2 className="w-8 h-8 text-gray-400" />
+                    <Icons.Building2 className="w-8 h-8 text-gray-400" />
                   </div>
                 )}
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900">{job.title}</h1>
-                  <div className="mt-1 flex items-center space-x-2 text-gray-500">
-                    <span>{job.company?.name}</span>
-                    <span>•</span>
-                    <span>{job.location}</span>
-                    <span>•</span>
-                    <span className="capitalize">{job.type}</span>
+                  <div className="mt-4 flex flex-wrap gap-4">
+                    <div className="flex items-center text-gray-500">
+                      <Icons.Building2 className="w-5 h-5 mr-1.5" />
+                      {job.company?.name}
+                    </div>
+                    <div className="flex items-center text-gray-500">
+                      <Icons.MapPin className="w-5 h-5 mr-1.5" />
+                      {job.location}
+                    </div>
+                    {(job.salary_min || job.salary_max) && (
+                      <div className="flex items-center text-gray-500">
+                        <Icons.Euro className="w-5 h-5 mr-1.5" />
+                        {job.salary_min && job.salary_max
+                          ? `${job.salary_min.toLocaleString()}€ - ${job.salary_max.toLocaleString()}€`
+                          : job.salary_min
+                          ? `From ${job.salary_min.toLocaleString()}€`
+                          : `Up to ${job.salary_max?.toLocaleString()}€`}
+                        <span className="ml-1">/ year</span>
+                      </div>
+                    )}
+                    <div className="flex items-center text-gray-500">
+                      <Icons.Briefcase className="w-5 h-5 mr-1.5" />
+                      <span className="capitalize">{job.type}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -249,20 +234,20 @@ function JobDetails() {
                   onClick={handleSaveJob}
                   disabled={isSaving}
                   className={`p-2.5 rounded-lg transition ${
-                    isSaved
+                    checkIfJobIsSaved(job?.id || '')
                       ? 'text-blue-600 hover:bg-blue-50'
                       : 'text-gray-400 hover:bg-gray-50'
                   }`}
-                  title={isSaved ? 'Remove from saved jobs' : 'Save job'}
+                  title={checkIfJobIsSaved(job?.id || '') ? 'Remove from saved jobs' : 'Save job'}
                 >
-                  <Bookmark className={`w-6 h-6 ${isSaved ? 'fill-current' : ''}`} />
+                  <Icons.Bookmark className={`w-6 h-6 ${checkIfJobIsSaved(job?.id || '') ? 'fill-current' : ''}`} />
                 </button>
                 {hasApplied ? (
                   <button
                     className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-green-700 bg-green-100"
                     disabled
                   >
-                    <Check className="w-4 h-4 mr-2" />
+                    <Icons.Check className="w-4 h-4 mr-2" />
                     Applied
                   </button>
                 ) : (
@@ -306,11 +291,11 @@ function JobDetails() {
         </div>
 
         {/* Application Modal */}
-        {showApplyModal && (
+        {showApplicationModal && (
           <ApplicationModal
             job={job}
             isOpen={true}
-            onClose={() => setShowApplyModal(false)}
+            onClose={() => setShowApplicationModal(false)}
             onSubmit={handleApplicationSubmit}
           />
         )}

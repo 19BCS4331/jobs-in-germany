@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Search, MapPin, Euro, Clock, Filter, Building2, Briefcase, ChevronDown, X, Bookmark } from 'lucide-react';
+import { Icons } from '../components/Icons';
 import { getJobs, type Job, saveJob, unsaveJob, getSavedJobId, checkIfJobIsSaved as checkSavedStatus } from '../lib/api';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext';
+import { useSavedJobs } from '../contexts/SavedJobsContext';
 import { toast } from 'react-hot-toast';
 
 // Job types
@@ -42,37 +43,9 @@ interface JobFilters {
 function JobCard({ job }: { job: Job }) {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { checkIfJobIsSaved, addSavedJob, removeSavedJob } = useSavedJobs();
   const [isSaving, setIsSaving] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
-
-  useEffect(() => {
-    let mounted = true;
-    
-    // Check if job is already saved
-    if (user) {
-      checkIfJobIsSaved();
-    } else {
-      setIsSaved(false); // Reset saved state when user logs out
-    }
-
-    async function checkIfJobIsSaved() {
-      try {
-        const saved = await checkSavedStatus(job.id);
-        if (mounted) {
-          setIsSaved(saved);
-        }
-      } catch (error) {
-        console.error('Error checking saved status:', error);
-        if (mounted) {
-          setIsSaved(false);
-        }
-      }
-    }
-
-    return () => {
-      mounted = false;
-    };
-  }, [user?.id, job.id]);
+  const isCurrentlySaved = checkIfJobIsSaved(job.id);
 
   const handleSaveJob = async (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent job card click event
@@ -84,22 +57,22 @@ function JobCard({ job }: { job: Job }) {
 
     try {
       setIsSaving(true);
-      if (isSaved) {
-        // Get saved job id first
+
+      if (isCurrentlySaved) {
         const savedJobId = await getSavedJobId(job.id);
         if (savedJobId) {
           await unsaveJob(savedJobId);
-          setIsSaved(false);
+          removeSavedJob(job.id);
           toast.success('Job removed from saved jobs');
         }
       } else {
         await saveJob(user.id, job.id);
-        setIsSaved(true);
+        addSavedJob(job.id);
         toast.success('Job saved successfully');
       }
     } catch (error) {
       console.error('Error saving job:', error);
-      toast.error(isSaved ? 'Failed to remove job' : 'Failed to save job');
+      toast.error(checkIfJobIsSaved(job.id) ? 'Failed to remove job' : 'Failed to save job');
     } finally {
       setIsSaving(false);
     }
@@ -121,7 +94,7 @@ function JobCard({ job }: { job: Job }) {
               />
             ) : (
               <div className="h-12 w-12 rounded-lg bg-gray-100 flex items-center justify-center">
-                <Building2 className="w-6 h-6 text-gray-400" />
+                <Icons.Building2 className="w-6 h-6 text-gray-400" />
               </div>
             )}
             <div>
@@ -129,12 +102,12 @@ function JobCard({ job }: { job: Job }) {
               <p className="text-sm text-gray-600">{job.company?.name}</p>
               <div className="mt-2 flex flex-wrap gap-4">
                 <div className="flex items-center text-gray-500 text-sm">
-                  <MapPin className="w-4 h-4 mr-1" />
+                  <Icons.MapPin className="w-4 h-4 mr-1" />
                   {job.location}
                 </div>
                 {(job.salary_min || job.salary_max) && (
                   <div className="flex items-center text-gray-500 text-sm">
-                    <Euro className="w-4 h-4 mr-1" />
+                    <Icons.Euro className="w-4 h-4 mr-1" />
                     {job.salary_min && job.salary_max
                       ? `${job.salary_min.toLocaleString()}€ - ${job.salary_max.toLocaleString()}€`
                       : job.salary_min
@@ -144,7 +117,7 @@ function JobCard({ job }: { job: Job }) {
                   </div>
                 )}
                 <div className="flex items-center text-gray-500 text-sm">
-                  <Briefcase className="w-4 h-4 mr-1" />
+                  <Icons.Briefcase className="w-4 h-4 mr-1" />
                   {job.type}
                 </div>
               </div>
@@ -155,13 +128,13 @@ function JobCard({ job }: { job: Job }) {
               onClick={handleSaveJob}
               disabled={isSaving}
               className={`p-2 rounded-lg transition ${
-                isSaved
+                isCurrentlySaved
                   ? 'text-blue-600 hover:bg-blue-50'
                   : 'text-gray-400 hover:bg-gray-50'
               }`}
-              title={isSaved ? 'Remove from saved jobs' : 'Save job'}
+              title={isCurrentlySaved ? 'Remove from saved jobs' : 'Save job'}
             >
-              <Bookmark className={`w-5 h-5 ${isSaved ? 'fill-current' : ''}`} />
+              <Icons.Bookmark className={`w-5 h-5 ${isCurrentlySaved ? 'fill-current' : ''}`} />
             </button>
           </div>
         </div>
@@ -247,7 +220,7 @@ function Jobs() {
         <div className="bg-white p-6 rounded-xl shadow-sm mb-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="relative">
-              <Search className="absolute left-3 top-3 text-gray-400 w-5 h-5" />
+              <Icons.Search className="absolute left-3 top-3 text-gray-400 w-5 h-5" />
               <input
                 type="text"
                 placeholder="Job title or keyword"
@@ -257,7 +230,7 @@ function Jobs() {
               />
             </div>
             <div className="relative">
-              <MapPin className="absolute left-3 top-3 text-gray-400 w-5 h-5" />
+              <Icons.MapPin className="absolute left-3 top-3 text-gray-400 w-5 h-5" />
               <input
                 type="text"
                 placeholder="Location"
@@ -270,9 +243,9 @@ function Jobs() {
               onClick={() => setShowFilters(!showFilters)}
               className="flex items-center justify-center gap-2 bg-gray-100 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-200 transition"
             >
-              <Filter className="w-5 h-5" />
+              <Icons.Filter className="w-5 h-5" />
               Filters
-              <ChevronDown className={`w-4 h-4 transform transition ${showFilters ? 'rotate-180' : ''}`} />
+              <Icons.ChevronDown className={`w-4 h-4 transform transition ${showFilters ? 'rotate-180' : ''}`} />
             </button>
           </div>
 

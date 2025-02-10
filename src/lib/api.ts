@@ -758,18 +758,21 @@ export async function getJobApplications(jobId: string): Promise<Application[]> 
   const { data, error } = await supabase
     .from('job_applications')
     .select(`
-      id,
-      job_id,
-      user_id,
-      cover_letter,
-      status,
-      created_at,
-      user:profiles!inner (
+      *,
+      user:profiles (
         id,
         full_name,
         email,
         headline,
         resume_url
+      ),
+      job:jobs (
+        *,
+        company:companies (
+          id,
+          name,
+          logo_url
+        )
       )
     `)
     .eq('job_id', jobId)
@@ -780,31 +783,24 @@ export async function getJobApplications(jobId: string): Promise<Application[]> 
     throw error;
   }
 
-  return (data as SupabaseApplication[]).map(transformApplication);
+  return data.map((app: any) => ({
+    ...app,
+    user: app.user || null,
+    job: app.job ? {
+      ...app.job,
+      company: app.job.company || null
+    } : null
+  }));
 }
 
 export async function getMyApplications(userId: string): Promise<Application[]> {
   const { data, error } = await supabase
     .from('job_applications')
     .select(`
-      id,
-      job_id,
-      user_id,
-      cover_letter,
-      status,
-      created_at,
-      job:jobs!inner (
-        id,
-        title,
-        description,
-        location,
-        type,
-        salary_min,
-        salary_max,
-        requirements,
-        company_id,
-        created_at,
-        company:companies!inner (
+      *,
+      job:jobs (
+        *,
+        company:companies (
           id,
           name,
           logo_url
@@ -819,7 +815,13 @@ export async function getMyApplications(userId: string): Promise<Application[]> 
     throw error;
   }
 
-  return (data as SupabaseApplicationWithJob[]).map(transformApplicationWithJob);
+  return data.map((app: any) => ({
+    ...app,
+    job: app.job ? {
+      ...app.job,
+      company: app.job.company || null
+    } : null
+  }));
 }
 
 export async function updateApplicationStatus(applicationId: string, status: Application['status']): Promise<Application> {
