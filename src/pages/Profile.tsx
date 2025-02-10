@@ -29,7 +29,7 @@ function Profile() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        if (user?.id) {
+        if (user) {
           const profile = await getProfile(user.id);
           if (profile) {
             setFormData(prev => ({
@@ -46,7 +46,7 @@ function Profile() {
     };
 
     fetchProfile();
-  }, [user?.id]);
+  }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

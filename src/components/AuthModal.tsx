@@ -33,9 +33,9 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: A
 
     try {
       if (mode === 'signup') {
-        await signUp(email, password, userType);
-        setSuccess('Account created successfully! Please check your email to verify your account.');
-        toast.success('Account created! Please check your email.', {
+        const { user } = await signUp(email, password, userType);
+        setSuccess('Account created successfully!');
+        toast.success('Account created!', {
           duration: 4000,
           position: 'bottom-right',
           style: {
@@ -45,11 +45,16 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: A
             borderRadius: '8px',
           },
         });
-        // Redirect based on user type
-        if (userType === 'employer') {
-          navigate('/company/new');
-        } else {
-          navigate('/profile');
+        
+        // Wait for user to be available
+        if (user) {
+          onClose();
+          // Redirect based on user type
+          if (userType === 'employer') {
+            navigate('/company/new');
+          } else {
+            navigate('/profile');
+          }
         }
       } else {
         const { user } = await signIn(email, password);
@@ -64,7 +69,9 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: A
             borderRadius: '8px',
           },
         });
-        onClose();
+        if (user) {
+          onClose();
+        }
       }
     } catch (err) {
       setError(err as AuthError);
@@ -74,6 +81,7 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: A
       });
     } finally {
       setLoading(false);
+    
     }
   };
 

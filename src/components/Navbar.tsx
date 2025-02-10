@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { NavLink } from 'react-router-dom';
-import { Menu, X, Briefcase, LogOut, User, ChevronDown, Loader2 } from 'lucide-react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { Menu, X, Briefcase, LogOut, User, ChevronDown, Loader2, Settings, Building2, Layout, FileText, BookOpen } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import AuthModal from './AuthModal';
 import { signOut } from '../lib/auth';
@@ -11,7 +11,8 @@ const Navbar = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
-  const { user } = useAuth();
+  const { user,profile } = useAuth();
+  const navigate = useNavigate();
 
   const handleSignOut = async () => {
     try {
@@ -58,6 +59,18 @@ const Navbar = () => {
     { path: '/blog', label: 'Blog' },
   ];
 
+  const profileMenuItems = profile?.user_type === 'employer' ? [
+    { icon: Layout, label: 'Dashboard', path: '/dashboard' },
+    { icon: Building2, label: 'My Companies', path: '/companies/manage' },
+    { icon: FileText, label: 'Job Postings', path: '/jobs/manage' },
+    { icon: Settings, label: 'Settings', path: '/settings' },
+  ] : [
+    { icon: Layout, label: 'Dashboard', path: '/dashboard' },
+    { icon: FileText, label: 'My Applications', path: '/applications' },
+    { icon: BookOpen, label: 'Saved Jobs', path: '/saved-jobs' },
+    { icon: Settings, label: 'Settings', path: '/settings' },
+  ];
+
   return (
     <nav className="bg-white shadow-md fixed w-full top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -102,25 +115,42 @@ const Navbar = () => {
                   <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center">
                     <User className="h-5 w-5 text-indigo-600" />
                   </div>
-                  <span>{user.email?.split('@')[0]}</span>
+                  <span>{profile && profile.full_name!=='' && profile.full_name!==null ? profile.full_name : user.email?.split('@')[0]}</span>
                   <ChevronDown className="h-4 w-4" />
                 </button>
 
                 {/* Profile Dropdown */}
                 {showProfileMenu && (
-                  <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5">
-                    <button
-                      onClick={handleSignOut}
-                      disabled={isSigningOut}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 flex items-center space-x-2 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isSigningOut ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <LogOut className="h-4 w-4" />
-                      )}
-                      <span>{isSigningOut ? 'Signing out...' : 'Sign out'}</span>
-                    </button>
+                  <div className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100">
+                    <div className="py-1">
+                      {profileMenuItems.map((item) => (
+                        <button
+                          key={item.path}
+                          onClick={() => {
+                            navigate(item.path);
+                            setShowProfileMenu(false);
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 flex items-center space-x-2 transition-colors duration-200"
+                        >
+                          <item.icon className="h-4 w-4" />
+                          <span>{item.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                    <div className="py-1">
+                      <button
+                        onClick={handleSignOut}
+                        disabled={isSigningOut}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 flex items-center space-x-2 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isSigningOut ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <LogOut className="h-4 w-4" />
+                        )}
+                        <span>{isSigningOut ? 'Signing out...' : 'Sign out'}</span>
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -151,57 +181,74 @@ const Navbar = () => {
       </div>
 
       {/* Mobile menu */}
-      <div className={`md:hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-screen' : 'max-h-0 overflow-hidden'}`}>
-        <div className="px-2 pt-2 pb-3 space-y-1 bg-white shadow-lg">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              onClick={() => setIsOpen(false)}
-              className={({ isActive }) =>
-                `block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 ${
-                  isActive
-                    ? 'text-indigo-600 bg-indigo-50'
-                    : 'text-gray-700 hover:text-indigo-600 hover:bg-indigo-50'
-                }`
-              }
-            >
-              {item.label}
-            </NavLink>
-          ))}
-          {user ? (
-            <button
-              onClick={handleSignOut}
-              disabled={isSigningOut}
-              className="w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 flex items-center space-x-2 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSigningOut ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <LogOut className="h-5 w-5" />
-              )}
-              <span>{isSigningOut ? 'Signing out...' : 'Sign out'}</span>
-            </button>
-          ) : (
-            <button
-              onClick={() => {
-                setShowAuthModal(true);
-                setIsOpen(false);
-              }}
-              className="w-full px-3 py-2 rounded-md text-base font-medium text-indigo-600 hover:bg-indigo-50 transition-colors duration-200"
-            >
-              Sign in
-            </button>
-          )}
+      {isOpen && (
+        <div className="md:hidden">
+          <div className="px-2 pt-2 pb-3 space-y-1">
+            {navItems.map((item) => (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                onClick={toggleMenu}
+                className={({ isActive }) =>
+                  `block px-3 py-2 rounded-md text-base font-medium ${
+                    isActive
+                      ? 'text-indigo-600 bg-indigo-50'
+                      : 'text-gray-700 hover:text-indigo-600 hover:bg-indigo-50'
+                  } transition-colors duration-200`
+                }
+              >
+                {item.label}
+              </NavLink>
+            ))}
+            {user ? (
+              <>
+                <div className="pt-4 pb-3 border-t border-gray-200">
+                  <div className="px-3 space-y-1">
+                    {profileMenuItems.map((item) => (
+                      <button
+                        key={item.path}
+                        onClick={() => {
+                          navigate(item.path);
+                          toggleMenu();
+                        }}
+                        className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 flex items-center space-x-2 transition-colors duration-200"
+                      >
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.label}</span>
+                      </button>
+                    ))}
+                    <button
+                      onClick={handleSignOut}
+                      disabled={isSigningOut}
+                      className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 flex items-center space-x-2 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isSigningOut ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <LogOut className="h-4 w-4" />
+                      )}
+                      <span>{isSigningOut ? 'Signing out...' : 'Sign out'}</span>
+                    </button>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <button
+                onClick={() => {
+                  setShowAuthModal(true);
+                  toggleMenu();
+                }}
+                className="w-full mt-4 px-4 py-2 text-center text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md transition-colors duration-200"
+              >
+                Sign in
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Auth Modal */}
-      {showAuthModal && (
-        <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
-      )}
-      
-      {/* Toast Container */}
+      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
       <Toaster />
     </nav>
   );
