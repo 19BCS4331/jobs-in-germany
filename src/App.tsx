@@ -17,8 +17,9 @@ import JobsManagement from './pages/dashboard/JobsManagement';
 import JobPostingForm from './pages/dashboard/JobPostingForm';
 import ApplicationsManagement from './pages/dashboard/ApplicationsManagement';
 import MyApplications from './pages/dashboard/MyApplications';
-import { AuthProvider } from './lib/AuthContext';
-import { useAuth } from './lib/AuthContext';
+import JobDetails from './pages/JobDetails';
+import SavedJobs from './pages/dashboard/SavedJobs';
+import { AuthProvider, useAuth } from './lib/AuthContext';
 
 // Protected route component
 const ProtectedRoute = ({ children, allowedUserType }: { children: React.ReactNode, allowedUserType?: 'employer' | 'job_seeker' }) => {
@@ -57,9 +58,30 @@ const ProtectedRoute = ({ children, allowedUserType }: { children: React.ReactNo
   return <>{children}</>;
 };
 
-function App() {
-  const { profile } = useAuth();
+// Dashboard index route component
+const DashboardIndex = () => {
+  const { profile, loading } = useAuth();
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-gray-600">Loading profile...</div>
+      </div>
+    );
+  }
+
+  return profile.user_type === 'employer' ? <EmployerDashboard /> : <JobSeekerDashboard />;
+};
+
+function App() {
   return (
     <AuthProvider>
       <>
@@ -67,6 +89,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/jobs" element={<Jobs />} />
+          <Route path="/jobs/:id" element={<JobDetails />} />
           <Route path="/companies" element={<Companies />} />
           <Route path="/resources" element={<Resources />} />
           <Route path="/blog" element={<Blog />} />
@@ -84,16 +107,7 @@ function App() {
               </ProtectedRoute>
             }
           >
-            <Route
-              index
-              element={
-                profile?.user_type === 'employer' ? (
-                  <EmployerDashboard />
-                ) : (
-                  <JobSeekerDashboard />
-                )
-              }
-            />
+            <Route index element={<DashboardIndex />} />
             <Route 
               path="companies/manage" 
               element={
@@ -111,7 +125,7 @@ function App() {
               } 
             />
             <Route 
-              path="companies/:id/edit" 
+              path="companies/edit/:id" 
               element={
                 <ProtectedRoute allowedUserType="employer">
                   <CompanyForm />
@@ -135,7 +149,7 @@ function App() {
               } 
             />
             <Route 
-              path="jobs/:jobId/edit" 
+              path="jobs/edit/:id" 
               element={
                 <ProtectedRoute allowedUserType="employer">
                   <JobPostingForm />
@@ -158,8 +172,14 @@ function App() {
                 </ProtectedRoute>
               } 
             />
-            <Route path="saved-jobs" element={<ProtectedRoute allowedUserType="job_seeker"><div>Saved Jobs</div></ProtectedRoute>} />
-            <Route path="settings" element={<div>Settings</div>} />
+            <Route 
+              path="saved-jobs" 
+              element={
+                <ProtectedRoute allowedUserType="job_seeker">
+                  <SavedJobs />
+                </ProtectedRoute>
+              } 
+            />
           </Route>
 
           {/* Catch all route */}

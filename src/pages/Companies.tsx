@@ -53,9 +53,9 @@ function Companies() {
             <div key={company.id} className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition">
               <div className="flex flex-col md:flex-row md:items-center gap-6">
                 <img
-                  src={company.logo_url}
-                  alt={company.name}
-                  className="w-20 h-20 rounded-lg object-cover"
+                  src={company.logo_url || '/company-placeholder.png'}
+                  alt={`${company.name} logo`}
+                  className="h-16 w-16 rounded-full object-cover"
                 />
                 <div className="flex-grow">
                   <h3 className="text-xl font-semibold text-gray-900">{company.name}</h3>

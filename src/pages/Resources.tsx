@@ -72,14 +72,21 @@ function Resources() {
                   <div key={item.id} className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition cursor-pointer">
                     <div className="flex items-start gap-4">
                       <div className="text-blue-600">
-                        {iconMap[item.icon as keyof typeof iconMap]}
+                        {item.icon && iconMap[item.icon as keyof typeof iconMap]}
                       </div>
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900">{item.title}</h3>
                         <p className="text-gray-600 mt-1">{item.description}</p>
-                        <button className="mt-4 text-blue-600 font-medium hover:text-blue-700 transition">
-                          Learn More →
-                        </button>
+                        {item.url && (
+                          <a 
+                            href={item.url}
+                            target="_blank"
+                            rel="noopener noreferrer" 
+                            className="mt-4 inline-block text-blue-600 font-medium hover:text-blue-700 transition"
+                          >
+                            Learn More →
+                          </a>
+                        )}
                       </div>
                     </div>
                   </div>

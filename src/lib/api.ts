@@ -111,6 +111,16 @@ export interface Resource {
   author?: ProfileBasic | null;
 }
 
+export interface SavedJob {
+  id: string;
+  user_id: string;
+  job_id: string;
+  created_at: string;
+  notify_before_deadline?: boolean;
+  notification_days?: number;
+  job?: Job | null;
+}
+
 // Helper type for Supabase nested relations
 type SupabaseJob = Omit<Job, 'company'> & {
   company: CompanyBasic[] | null;
@@ -372,106 +382,105 @@ export async function getJobs(filters?: {
   salary_min?: number;
   salary_max?: number;
 }): Promise<Job[]> {
-  let query = supabase
-    .from('jobs')
-    .select(`
-      id,
-      title,
-      description,
-      location,
-      type,
-      salary_min,
-      salary_max,
-      requirements,
-      company_id,
-      created_at,
-      company:companies (
-        id,
-        name,
-        logo_url
-      )
-    `);
+  try {
+    let query = supabase
+      .from('jobs')
+      .select(`
+        *,
+        company:companies!inner (
+          id,
+          name,
+          logo_url
+        )
+      `);
 
-  if (filters?.search) {
-    query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
-  }
+    if (filters?.search) {
+      query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
+    }
 
-  if (filters?.location) {
-    query = query.ilike('location', `%${filters.location}%`);
-  }
+    if (filters?.location) {
+      query = query.ilike('location', `%${filters.location}%`);
+    }
 
-  if (filters?.company_id) {
-    query = query.eq('company_id', filters.company_id);
-  }
+    if (filters?.company_id) {
+      query = query.eq('company_id', filters.company_id);
+    }
 
-  if (filters?.type) {
-    query = query.eq('type', filters.type);
-  }
+    if (filters?.type) {
+      query = query.eq('type', filters.type);
+    }
 
-  if (filters?.salary_min) {
-    query = query.gte('salary_min', filters.salary_min);
-  }
+    if (filters?.salary_min) {
+      query = query.gte('salary_min', filters.salary_min);
+    }
 
-  if (filters?.salary_max) {
-    query = query.lte('salary_max', filters.salary_max);
-  }
+    if (filters?.salary_max) {
+      query = query.lte('salary_max', filters.salary_max);
+    }
 
-  const { data, error } = await query.order('created_at', { ascending: false });
+    const { data, error } = await query.order('created_at', { ascending: false });
 
-  if (error) {
-    console.error('Error fetching jobs:', error);
+    if (error) {
+      console.error('Error fetching jobs:', error);
+      throw error;
+    }
+
+    return (data as any[]).map(job => ({
+      ...job,
+      company: job.company ? {
+        id: job.company.id,
+        name: job.company.name,
+        logo_url: job.company.logo_url
+      } : null
+    })) as Job[];
+  } catch (error) {
+    console.error('Error in getJobs:', error);
     throw error;
   }
-
-  return (data as SupabaseJob[]).map(transformJob);
 }
 
 export async function getJob(id: string): Promise<Job | null> {
-  const { data, error } = await supabase
-    .from('jobs')
-    .select(`
-      id,
-      title,
-      description,
-      location,
-      type,
-      salary_min,
-      salary_max,
-      requirements,
-      company_id,
-      created_at,
-      company:companies (
-        id,
-        name,
-        description,
-        website,
-        location,
-        size,
-        industry,
-        logo_url,
-        star_rating,
-        founded_year,
-        headquarters,
-        funding_stage,
-        mission,
-        values,
-        culture,
-        benefits,
-        tech_stack,
-        linkedin_url,
-        twitter_url,
-        facebook_url
-      )
-    `)
-    .eq('id', id)
-    .single();
+  try {
+    const { data, error } = await supabase
+      .from('jobs')
+      .select(`
+        *,
+        company:companies!inner (
+          id,
+          name,
+          logo_url,
+          description,
+          website,
+          location
+        )
+      `)
+      .eq('id', id)
+      .single();
 
-  if (error) {
-    console.error('Error fetching job:', error);
-    return null;
+    if (error) {
+      console.error('Error fetching job:', error);
+      throw error;
+    }
+
+    if (!data) {
+      return null;
+    }
+
+    return {
+      ...data,
+      company: data.company ? {
+        id: data.company.id,
+        name: data.company.name,
+        logo_url: data.company.logo_url,
+        description: data.company.description,
+        website: data.company.website,
+        location: data.company.location
+      } : null
+    } as Job;
+  } catch (error) {
+    console.error('Error in getJob:', error);
+    throw error;
   }
-
-  return transformJobWithFullCompany(data as SupabaseJobWithFullCompany);
 }
 
 export async function getJobsByCompany(companyId: string): Promise<Job[]> {
@@ -590,16 +599,7 @@ export async function getBlogPosts(): Promise<BlogPost[]> {
       excerpt,
       image_url,
       published_at,
-      author_id,
-      tags,
-      category,
-      read_time,
-      author:profiles (
-        id,
-        full_name,
-        email,
-        headline
-      )
+      author_id
     `)
     .order('published_at', { ascending: false });
 
@@ -608,11 +608,7 @@ export async function getBlogPosts(): Promise<BlogPost[]> {
     throw error;
   }
 
-  return (data as (Omit<BlogPost, 'author'> & { author: ProfileBasic[] | null })[])
-    .map(post => ({
-      ...post,
-      author: post.author?.[0] || null
-    }));
+  return data as BlogPost[];
 }
 
 export async function getBlogPost(id: string): Promise<BlogPost | null> {
@@ -626,16 +622,7 @@ export async function getBlogPost(id: string): Promise<BlogPost | null> {
       excerpt,
       image_url,
       published_at,
-      author_id,
-      tags,
-      category,
-      read_time,
-      author:profiles (
-        id,
-        full_name,
-        email,
-        headline
-      )
+      author_id
     `)
     .eq('id', id)
     .single();
@@ -645,11 +632,7 @@ export async function getBlogPost(id: string): Promise<BlogPost | null> {
     return null;
   }
 
-  const post = data as (Omit<BlogPost, 'author'> & { author: ProfileBasic[] | null });
-  return {
-    ...post,
-    author: post.author?.[0] || null
-  };
+  return data as BlogPost;
 }
 
 // Resources
@@ -663,17 +646,7 @@ export async function getResources(): Promise<Resource[]> {
       description,
       category,
       url,
-      icon,
-      type,
-      tags,
-      difficulty_level,
-      author_id,
-      author:profiles (
-        id,
-        full_name,
-        email,
-        headline
-      )
+      icon
     `)
     .order('category', { ascending: true });
 
@@ -682,11 +655,7 @@ export async function getResources(): Promise<Resource[]> {
     throw error;
   }
 
-  return (data as (Omit<Resource, 'author'> & { author: ProfileBasic[] | null })[])
-    .map(resource => ({
-      ...resource,
-      author: resource.author?.[0] || null
-    }));
+  return data as Resource[];
 }
 
 // Profiles
@@ -881,4 +850,157 @@ export async function updateApplicationStatus(applicationId: string, status: App
   }
 
   return transformApplication(data as SupabaseApplication);
+}
+
+// Job Bookmarks
+export async function getSavedJobs(userId: string): Promise<SavedJob[]> {
+  const { data, error } = await supabase
+    .from('saved_jobs')
+    .select(`
+      id,
+      user_id,
+      job_id,
+      created_at,
+      notify_before_deadline,
+      notification_days
+    `)
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching saved jobs:', error);
+    throw error;
+  }
+
+  // Load job details for each saved job
+  const jobsWithDetails = await Promise.all(
+    data.map(async (savedJob) => {
+      try {
+        const jobDetails = await getJob(savedJob.job_id);
+        return { ...savedJob, job: jobDetails };
+      } catch (error) {
+        console.error(`Error loading job ${savedJob.job_id}:`, error);
+        return { ...savedJob, job: null };
+      }
+    })
+  );
+
+  return jobsWithDetails;
+}
+
+export async function saveJob(userId: string, jobId: string): Promise<SavedJob> {
+  const { data, error } = await supabase
+    .from('saved_jobs')
+    .insert({
+      user_id: userId,
+      job_id: jobId,
+      notify_before_deadline: true,
+      notification_days: 7,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error saving job:', error);
+    throw error;
+  }
+
+  return data;
+}
+
+export async function unsaveJob(savedJobId: string): Promise<void> {
+  const { error } = await supabase
+    .from('saved_jobs')
+    .delete()
+    .eq('id', savedJobId);
+
+  if (error) {
+    console.error('Error removing saved job:', error);
+    throw error;
+  }
+}
+
+export async function updateSavedJobNotification(
+  savedJobId: string,
+  notify: boolean,
+  days?: number
+): Promise<SavedJob> {
+  const { data, error } = await supabase
+    .from('saved_jobs')
+    .update({
+      notify_before_deadline: notify,
+      notification_days: notify ? days || 7 : null,
+    })
+    .eq('id', savedJobId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating saved job notification:', error);
+    throw error;
+  }
+
+  return data;
+}
+
+export async function checkIfJobIsSaved(jobId: string): Promise<boolean> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+
+  try {
+    const { data, error } = await supabase
+      .from('saved_jobs')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('job_id', jobId)
+      .maybeSingle();
+
+    return !error && data !== null;
+  } catch (error) {
+    console.error('Error checking saved status:', error);
+    return false;
+  }
+}
+
+export async function getSavedJobId(jobId: string): Promise<string | null> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  try {
+    const { data, error } = await supabase
+      .from('saved_jobs')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('job_id', jobId)
+      .maybeSingle();
+
+    return data?.id || null;
+  } catch (error) {
+    console.error('Error getting saved job id:', error);
+    return null;
+  }
+}
+
+export async function checkIfJobApplied(jobId: string): Promise<boolean> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
+    const { data, error } = await supabase
+      .from('job_applications')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('job_id', jobId)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error checking job application status:', error);
+      return false;
+    }
+
+    return data !== null;
+  } catch (error) {
+    console.error('Error in checkIfJobApplied:', error);
+    return false;
+  }
 }

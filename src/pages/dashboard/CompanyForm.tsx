@@ -6,6 +6,73 @@ import { Company, createCompany, updateCompany, getCompany } from '../../lib/api
 import { toast } from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 
+// Form data interface with all fields as strings (except benefits array)
+interface CompanyFormData {
+  name: string;
+  description: string;
+  website: string;
+  location: string;
+  size: string;
+  industry: string;
+  founded_year: string;
+  headquarters: string;
+  funding_stage: string;
+  mission: string;
+  values: string;
+  culture: string;
+  benefits: string[];
+  tech_stack: string;
+  linkedin_url: string;
+  twitter_url: string;
+  facebook_url: string;
+  logo_url?: string;
+}
+
+// Convert company data to form data
+const companyToFormData = (company: Partial<Company>): CompanyFormData => ({
+  name: company.name || '',
+  description: company.description || '',
+  website: company.website || '',
+  location: company.location || '',
+  size: company.size || '',
+  industry: company.industry || '',
+  founded_year: company.founded_year?.toString() || '',
+  headquarters: company.headquarters || '',
+  funding_stage: company.funding_stage || '',
+  mission: company.mission || '',
+  values: company.values || '',
+  culture: company.culture || '',
+  benefits: company.benefits || [],
+  tech_stack: company.tech_stack || '',
+  linkedin_url: company.linkedin_url || '',
+  twitter_url: company.twitter_url || '',
+  facebook_url: company.facebook_url || '',
+  logo_url: company.logo_url || ''
+});
+
+// Convert form data back to company data for API
+const formDataToCompany = (formData: CompanyFormData): Omit<Company, 'id' | 'created_at'> => ({
+  name: formData.name,
+  description: formData.description,
+  website: formData.website || null,
+  location: formData.location,
+  size: formData.size,
+  industry: formData.industry,
+  founded_year: formData.founded_year ? parseInt(formData.founded_year, 10) : null,
+  headquarters: formData.headquarters || null,
+  funding_stage: formData.funding_stage || null,
+  mission: formData.mission || null,
+  values: formData.values || null,
+  culture: formData.culture || null,
+  benefits: formData.benefits.length > 0 ? formData.benefits : null,
+  tech_stack: formData.tech_stack || null,
+  linkedin_url: formData.linkedin_url || null,
+  twitter_url: formData.twitter_url || null,
+  facebook_url: formData.facebook_url || null,
+  logo_url: formData.logo_url || null,
+  owner_id: '' // This will be set in handleSubmit
+});
+
 const CompanyForm: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -13,14 +80,14 @@ const CompanyForm: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string>('');
-  const [formData, setFormData] = useState<Partial<Company>>({
+  const [formData, setFormData] = useState<CompanyFormData>({
     name: '',
     description: '',
     website: '',
     location: '',
     size: '',
     industry: '',
-    founded_year: undefined,
+    founded_year: '',
     headquarters: '',
     funding_stage: '',
     mission: '',
@@ -30,7 +97,7 @@ const CompanyForm: React.FC = () => {
     tech_stack: '',
     linkedin_url: '',
     twitter_url: '',
-    facebook_url: '',
+    facebook_url: ''
   });
 
   useEffect(() => {
@@ -44,7 +111,7 @@ const CompanyForm: React.FC = () => {
       setIsLoading(true);
       const company = await getCompany(id!);
       if (company) {
-        setFormData(company);
+        setFormData(companyToFormData(company));
         if (company.logo_url) {
           setLogoPreview(company.logo_url);
         }
@@ -122,28 +189,30 @@ const CompanyForm: React.FC = () => {
     e.preventDefault();
     if (!user) return;
 
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-
       let logo_url = formData.logo_url;
       if (logoFile) {
-        logo_url = await uploadLogo();
+        logo_url = await uploadLogo() || '';
       }
 
-      const companyData: Partial<Company> = {
+      const companyData = formDataToCompany({
         ...formData,
-        logo_url,
-        owner_id: user.id,
-      };
+        logo_url
+      });
 
       if (id) {
+        // For updates, we can send partial data
         await updateCompany(id, companyData);
-        toast.success('Company updated successfully');
+        toast.success('Company updated successfully!');
       } else {
-        await createCompany(companyData as Company);
-        toast.success('Company created successfully');
+        // For creation, we need to include owner_id
+        await createCompany({
+          ...companyData,
+          owner_id: user.id
+        });
+        toast.success('Company created successfully!');
       }
-
       navigate('/dashboard/companies/manage');
     } catch (error) {
       console.error('Error saving company:', error);
@@ -299,7 +368,7 @@ const CompanyForm: React.FC = () => {
               name="founded_year"
               min="1800"
               max={new Date().getFullYear()}
-              value={formData.founded_year || ''}
+              value={formData.founded_year}
               onChange={handleInputChange}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
             />
@@ -386,7 +455,7 @@ const CompanyForm: React.FC = () => {
               id="benefits"
               name="benefits"
               rows={4}
-              value={formData.benefits?.join('\n')}
+              value={formData.benefits.join('\n')}
               onChange={handleBenefitsChange}
               placeholder="Health insurance&#10;401(k) matching&#10;Remote work&#10;Flexible hours"
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"

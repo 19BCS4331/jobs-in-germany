@@ -52,9 +52,9 @@ function Blog() {
           {posts.map((post) => (
             <article key={post.id} className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition">
               <img
-                src={post.image_url}
+                src={post.image_url || '/blog-placeholder.png'}
                 alt={post.title}
-                className="w-full h-48 object-cover"
+                className="w-full h-48 object-cover rounded-t-lg"
               />
               <div className="p-6">
                 <h2 className="text-xl font-semibold text-gray-900 mb-2">
@@ -65,19 +65,17 @@ function Blog() {
                 </p>
                 <div className="flex items-center text-sm text-gray-500 mb-4">
                   <div className="flex items-center">
-                    <User className="w-4 h-4 mr-1" />
-                    Author
-                  </div>
-                  <div className="mx-2">•</div>
-                  <div className="flex items-center">
                     <Calendar className="w-4 h-4 mr-1" />
                     {format(new Date(post.published_at), 'MMMM d, yyyy')}
                   </div>
                 </div>
-                <button className="flex items-center text-blue-600 font-medium hover:text-blue-700 transition">
+                <a 
+                  href={`/blog/${post.id}`} 
+                  className="flex items-center text-blue-600 font-medium hover:text-blue-700 transition"
+                >
                   Read More
                   <ArrowRight className="w-4 h-4 ml-1" />
-                </button>
+                </a>
               </div>
             </article>
           ))}

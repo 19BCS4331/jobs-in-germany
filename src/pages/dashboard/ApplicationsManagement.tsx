@@ -28,47 +28,53 @@ const ApplicationsManagement: React.FC = () => {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [applications, setApplications] = useState<Application[]>([]);
-  const [selectedJobId, setSelectedJobId] = useState<string>(searchParams.get('jobId') || '');
+  const [selectedJobId, setSelectedJobId] = useState<string>('');
   const [jobs, setJobs] = useState<Job[]>([]);
-  const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
 
+  // Load company and jobs only once when component mounts
   useEffect(() => {
-    if (user) {
-      loadCompanyAndJobs();
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (selectedJobId) {
-      loadApplications(selectedJobId);
-    }
-  }, [selectedJobId]);
-
-  const loadCompanyAndJobs = async () => {
-    try {
+    const loadInitialData = async () => {
       if (!user) return;
       
-      const company = await getCompanyByOwner(user.id);
-      if (!company || !company.id) {
-        toast.error('No company found. Please create a company first.');
-        navigate('/dashboard/companies/new');
-        return;
-      }
+      try {
+        const company = await getCompanyByOwner(user.id);
+        if (!company || !company.id) {
+          toast.error('No company found. Please create a company first.');
+          navigate('/dashboard/companies/new');
+          return;
+        }
 
-      const jobsData = await getJobsByCompany(company.id);
-      setJobs(jobsData);
-      if (!selectedJobId && jobsData.length > 0) {
-        setSelectedJobId(jobsData[0].id);
-      }
-    } catch (error) {
-      console.error('Error loading company and jobs:', error);
-      toast.error('Failed to load jobs');
-    }
-  };
+        const jobsData = await getJobsByCompany(company.id);
+        setJobs(jobsData);
 
-  const loadApplications = async (jobId: string) => {
+        // Set the selected job ID from URL params or first job
+        const jobIdFromUrl = searchParams.get('jobId');
+        const initialJobId = jobIdFromUrl && jobsData.some(job => job.id === jobIdFromUrl)
+          ? jobIdFromUrl
+          : jobsData.length > 0 ? jobsData[0].id : '';
+        
+        setSelectedJobId(initialJobId);
+
+        if (initialJobId) {
+          const applications = await getJobApplications(initialJobId);
+          setApplications(applications);
+        }
+      } catch (error) {
+        console.error('Error loading initial data:', error);
+        toast.error('Failed to load data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadInitialData();
+  }, [user, navigate, searchParams]);
+
+  // Load applications when selected job changes
+  const handleJobChange = async (jobId: string) => {
+    setSelectedJobId(jobId);
+    setIsLoading(true);
     try {
-      setIsLoading(true);
       const applications = await getJobApplications(jobId);
       setApplications(applications);
     } catch (error) {
@@ -128,9 +134,10 @@ const ApplicationsManagement: React.FC = () => {
         <select
           id="job-filter"
           value={selectedJobId}
-          onChange={(e) => setSelectedJobId(e.target.value)}
+          onChange={(e) => handleJobChange(e.target.value)}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
         >
+          <option value="">Select a job</option>
           {jobs.map((job) => (
             <option key={job.id} value={job.id}>
               {job.title}
@@ -146,7 +153,7 @@ const ApplicationsManagement: React.FC = () => {
             <User className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">No applications</h3>
             <p className="mt-1 text-sm text-gray-500">
-              There are no applications for this job posting yet.
+              {selectedJobId ? 'There are no applications for this job posting yet.' : 'Please select a job to view applications.'}
             </p>
           </div>
         ) : (
@@ -200,71 +207,22 @@ const ApplicationsManagement: React.FC = () => {
                   <Calendar className="mr-1.5 h-4 w-4 flex-shrink-0" />
                   Applied {application.created_at ? formatDate(application.created_at) : 'Unknown date'}
                 </div>
+                {application.cover_letter && (
+                  <div className="sm:col-span-2">
+                    <div className="flex items-center text-sm text-gray-500">
+                      <FileText className="mr-1.5 h-4 w-4 flex-shrink-0" />
+                      Cover Letter
+                    </div>
+                    <p className="mt-1 text-sm text-gray-700 whitespace-pre-wrap">
+                      {application.cover_letter}
+                    </p>
+                  </div>
+                )}
               </div>
-
-              {/* Cover Letter */}
-              {application.cover_letter && (
-                <div className="mt-4">
-                  <button
-                    onClick={() => setSelectedApplication(application)}
-                    className="inline-flex items-center text-sm text-indigo-600 hover:text-indigo-500"
-                  >
-                    <FileText className="mr-1.5 h-4 w-4" />
-                    View Cover Letter
-                  </button>
-                </div>
-              )}
-
-              {/* Resume */}
-              {application.user?.resume_url && (
-                <div className="mt-2">
-                  <a
-                    href={application.user.resume_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center text-sm text-indigo-600 hover:text-indigo-500"
-                  >
-                    <FileText className="mr-1.5 h-4 w-4" />
-                    View Resume
-                  </a>
-                </div>
-              )}
             </div>
           ))
         )}
       </div>
-
-      {/* Cover Letter Modal */}
-      {selectedApplication && (
-        <div className="fixed inset-0 z-10 overflow-y-auto">
-          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={() => setSelectedApplication(null)} />
-            <div className="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
-              <div>
-                <div className="mt-3 text-center sm:mt-5">
-                  <h3 className="text-lg leading-6 font-medium text-gray-900">
-                    Cover Letter
-                  </h3>
-                  <div className="mt-4">
-                    <p className="text-sm text-gray-500 whitespace-pre-wrap">
-                      {selectedApplication.cover_letter}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="mt-5 sm:mt-6">
-                <button
-                  type="button"
-                  className="inline-flex justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm"
-                  onClick={() => setSelectedApplication(null)}
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

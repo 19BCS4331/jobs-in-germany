@@ -1,6 +1,20 @@
-import React from 'react';
-import { FileText, BookOpen, TrendingUp, Clock, Briefcase, CheckCircle2, XCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { FileText, BookOpen, TrendingUp, Clock, Briefcase, CheckCircle2, XCircle, Bookmark, Star } from 'lucide-react';
 import { useAuth } from '../../lib/AuthContext';
+import { supabase } from '../../lib/supabase';
+
+interface DashboardStats {
+  totalApplications: number;
+  savedJobs: number;
+  recommendedJobs: number;
+  applicationsByStatus: {
+    pending: number;
+    reviewing: number;
+    accepted: number;
+    rejected: number;
+  };
+}
 
 interface StatCardProps {
   icon: React.ElementType;
@@ -34,183 +48,202 @@ const StatCard: React.FC<StatCardProps> = ({ icon: Icon, label, value, trend }) 
   </div>
 );
 
-interface ApplicationCardProps {
-  company: string;
-  position: string;
-  status: 'pending' | 'accepted' | 'rejected' | 'interviewing';
-  appliedDate: string;
-  logo?: string;
-}
+function JobSeekerDashboard() {
+  const { user } = useAuth();
+  const [stats, setStats] = useState<DashboardStats>({
+    totalApplications: 0,
+    savedJobs: 0,
+    recommendedJobs: 0,
+    applicationsByStatus: {
+      pending: 0,
+      reviewing: 0,
+      accepted: 0,
+      rejected: 0
+    }
+  });
+  const [loading, setLoading] = useState(true);
 
-const ApplicationCard: React.FC<ApplicationCardProps> = ({ company, position, status, appliedDate, logo }) => {
-  const statusStyles = {
-    pending: 'bg-yellow-100 text-yellow-800',
-    accepted: 'bg-green-100 text-green-800',
-    rejected: 'bg-red-100 text-red-800',
-    interviewing: 'bg-blue-100 text-blue-800',
+  useEffect(() => {
+    if (user) {
+      loadDashboardStats();
+    }
+  }, [user]);
+
+  const loadDashboardStats = async () => {
+    if (!user) return;
+
+    try {
+      setLoading(true);
+
+      // Get applications count
+      const { count: applicationsCount, error: applicationsError } = await supabase
+        .from('applications')
+        .select('*', { count: 'exact' })
+        .eq('user_id', user.id);
+
+      if (applicationsError) throw applicationsError;
+
+      // Get applications by status
+      const { data: applicationsByStatus, error: statusError } = await supabase
+        .from('applications')
+        .select('status')
+        .eq('user_id', user.id);
+
+      if (statusError) throw statusError;
+
+      // Get saved jobs count
+      const { count: savedJobsCount, error: savedJobsError } = await supabase
+        .from('saved_jobs')
+        .select('*', { count: 'exact' })
+        .eq('user_id', user.id);
+
+      if (savedJobsError) throw savedJobsError;
+
+      // Calculate status counts
+      const statusCounts = applicationsByStatus.reduce((acc, app) => {
+        acc[app.status] = (acc[app.status] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      setStats({
+        totalApplications: applicationsCount || 0,
+        savedJobs: savedJobsCount || 0,
+        recommendedJobs: 10, // This would ideally come from the recommendations algorithm
+        applicationsByStatus: {
+          pending: statusCounts.pending || 0,
+          reviewing: statusCounts.reviewing || 0,
+          accepted: statusCounts.accepted || 0,
+          rejected: statusCounts.rejected || 0
+        }
+      });
+    } catch (error) {
+      console.error('Error loading dashboard stats:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const statusIcons = {
-    pending: Clock,
-    accepted: CheckCircle2,
-    rejected: XCircle,
-    interviewing: Briefcase,
-  };
-
-  const StatusIcon = statusIcons[status];
-
-  return (
-    <div className="bg-white rounded-lg shadow-sm p-6">
-      <div className="flex items-start space-x-4">
-        <div className="h-12 w-12 rounded-lg bg-gray-100 flex items-center justify-center">
-          {logo ? (
-            <img src={logo} alt={company} className="h-8 w-8 rounded" />
-          ) : (
-            <Briefcase className="h-6 w-6 text-gray-400" />
-          )}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-gray-900 truncate">{position}</h3>
-            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusStyles[status]}`}>
-              <StatusIcon className="h-3.5 w-3.5 mr-1" />
-              {status.charAt(0).toUpperCase() + status.slice(1)}
-            </span>
-          </div>
-          <p className="mt-1 text-sm text-gray-500">{company}</p>
-          <p className="mt-1 text-xs text-gray-400">Applied on {appliedDate}</p>
-        </div>
+  if (loading) {
+    return (
+      <div className="flex justify-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
-    </div>
-  );
-};
-
-interface JobCardProps {
-  company: string;
-  position: string;
-  location: string;
-  salary?: string;
-  postedDate: string;
-  logo?: string;
-}
-
-const JobCard: React.FC<JobCardProps> = ({ company, position, location, salary, postedDate, logo }) => (
-  <div className="bg-white rounded-lg shadow-sm p-6">
-    <div className="flex items-start space-x-4">
-      <div className="h-12 w-12 rounded-lg bg-gray-100 flex items-center justify-center">
-        {logo ? (
-          <img src={logo} alt={company} className="h-8 w-8 rounded" />
-        ) : (
-          <Briefcase className="h-6 w-6 text-gray-400" />
-        )}
-      </div>
-      <div className="flex-1 min-w-0">
-        <h3 className="text-sm font-medium text-gray-900">{position}</h3>
-        <p className="mt-1 text-sm text-gray-500">{company}</p>
-        <div className="mt-2 flex items-center text-sm text-gray-500">
-          <div className="flex items-center">
-            <span>{location}</span>
-            {salary && (
-              <>
-                <span className="mx-2">•</span>
-                <span>{salary}</span>
-              </>
-            )}
-          </div>
-        </div>
-        <p className="mt-1 text-xs text-gray-400">Posted {postedDate}</p>
-      </div>
-    </div>
-  </div>
-);
-
-const JobSeekerDashboard: React.FC = () => {
-  const { profile } = useAuth();
-
-  // Temporary mock data
-  const stats = [
-    { icon: FileText, label: 'Total Applications', value: 12, trend: { value: 20, isPositive: true } },
-    { icon: BookOpen, label: 'Saved Jobs', value: 8 },
-    { icon: CheckCircle2, label: 'Interviews Scheduled', value: 2, trend: { value: 100, isPositive: true } },
-    { icon: Clock, label: 'Pending Reviews', value: 5 },
-  ];
-
-  const recentApplications = [
-    {
-      company: 'TechCorp GmbH',
-      position: 'Senior Frontend Developer',
-      status: 'interviewing' as const,
-      appliedDate: '2024-02-01',
-    },
-    {
-      company: 'Digital Solutions AG',
-      position: 'Full Stack Developer',
-      status: 'pending' as const,
-      appliedDate: '2024-02-05',
-    },
-    {
-      company: 'Cloud Systems',
-      position: 'DevOps Engineer',
-      status: 'accepted' as const,
-      appliedDate: '2024-01-28',
-    },
-  ];
-
-  const recommendedJobs = [
-    {
-      company: 'Innovation Labs',
-      position: 'React Developer',
-      location: 'Berlin',
-      salary: '€65,000 - €85,000',
-      postedDate: '2 days ago',
-    },
-    {
-      company: 'Future Tech GmbH',
-      position: 'Senior Frontend Engineer',
-      location: 'Munich',
-      salary: '€70,000 - €90,000',
-      postedDate: '1 day ago',
-    },
-  ];
+    );
+  }
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Welcome back, {profile?.full_name}</h1>
-        <p className="mt-1 text-sm text-gray-500">Here's an overview of your job search progress.</p>
+        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+        <p className="mt-1 text-sm text-gray-500">
+          Welcome back! Here's an overview of your job search activity
+        </p>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => (
-          <StatCard key={index} {...stat} />
-        ))}
+        <StatCard
+          icon={Briefcase}
+          label="Total Applications"
+          value={stats.totalApplications}
+        />
+        <StatCard
+          icon={Bookmark}
+          label="Saved Jobs"
+          value={stats.savedJobs}
+        />
+        <StatCard
+          icon={Star}
+          label="Recommended Jobs"
+          value={stats.recommendedJobs}
+        />
+        <StatCard
+          icon={CheckCircle2}
+          label="Accepted Applications"
+          value={stats.applicationsByStatus.accepted}
+          trend={{
+            value: stats.totalApplications
+              ? Math.round((stats.applicationsByStatus.accepted / stats.totalApplications) * 100)
+              : 0,
+            isPositive: true
+          }}
+        />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Applications */}
-        <div className="space-y-4">
-          <h2 className="text-lg font-medium text-gray-900">Recent Applications</h2>
-          <div className="space-y-4">
-            {recentApplications.map((application, index) => (
-              <ApplicationCard key={index} {...application} />
-            ))}
-          </div>
+      {/* Quick Actions */}
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <h2 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Link
+            to="/dashboard/applications"
+            className="flex items-center justify-between p-4 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition"
+          >
+            <div className="flex items-center space-x-3">
+              <Briefcase className="h-6 w-6 text-indigo-600" />
+              <span className="font-medium text-gray-900">View Applications</span>
+            </div>
+            <span className="text-indigo-600">{stats.totalApplications}</span>
+          </Link>
+          <Link
+            to="/dashboard/saved-jobs"
+            className="flex items-center justify-between p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition"
+          >
+            <div className="flex items-center space-x-3">
+              <Bookmark className="h-6 w-6 text-blue-600" />
+              <span className="font-medium text-gray-900">Saved Jobs</span>
+            </div>
+            <span className="text-blue-600">{stats.savedJobs}</span>
+          </Link>
+          <Link
+            to="/dashboard/recommended-jobs"
+            className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition"
+          >
+            <div className="flex items-center space-x-3">
+              <Star className="h-6 w-6 text-yellow-600" />
+              <span className="font-medium text-gray-900">Recommendations</span>
+            </div>
+            <span className="text-yellow-600">{stats.recommendedJobs}</span>
+          </Link>
         </div>
+      </div>
 
-        {/* Recommended Jobs */}
-        <div className="space-y-4">
-          <h2 className="text-lg font-medium text-gray-900">Recommended Jobs</h2>
-          <div className="space-y-4">
-            {recommendedJobs.map((job, index) => (
-              <JobCard key={index} {...job} />
-            ))}
+      {/* Application Status */}
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <h2 className="text-lg font-medium text-gray-900 mb-4">Application Status</h2>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg">
+            <div className="flex items-center space-x-3">
+              <Clock className="h-6 w-6 text-yellow-600" />
+              <span className="font-medium text-gray-900">Pending</span>
+            </div>
+            <span className="text-yellow-600">{stats.applicationsByStatus.pending}</span>
+          </div>
+          <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
+            <div className="flex items-center space-x-3">
+              <TrendingUp className="h-6 w-6 text-blue-600" />
+              <span className="font-medium text-gray-900">Reviewing</span>
+            </div>
+            <span className="text-blue-600">{stats.applicationsByStatus.reviewing}</span>
+          </div>
+          <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
+            <div className="flex items-center space-x-3">
+              <CheckCircle2 className="h-6 w-6 text-green-600" />
+              <span className="font-medium text-gray-900">Accepted</span>
+            </div>
+            <span className="text-green-600">{stats.applicationsByStatus.accepted}</span>
+          </div>
+          <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg">
+            <div className="flex items-center space-x-3">
+              <XCircle className="h-6 w-6 text-red-600" />
+              <span className="font-medium text-gray-900">Rejected</span>
+            </div>
+            <span className="text-red-600">{stats.applicationsByStatus.rejected}</span>
           </div>
         </div>
       </div>
     </div>
   );
-};
+}
 
 export default JobSeekerDashboard;

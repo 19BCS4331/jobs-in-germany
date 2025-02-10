@@ -1,26 +1,208 @@
 import React, { useEffect, useState } from 'react';
-import { Search, MapPin, Euro, Clock } from 'lucide-react';
-import { getJobs, type Job } from '../lib/api';
-import { useSearchParams } from 'react-router-dom';
+import { Search, MapPin, Euro, Clock, Filter, Building2, Briefcase, ChevronDown, X, Bookmark } from 'lucide-react';
+import { getJobs, type Job, saveJob, unsaveJob, getSavedJobId, checkIfJobIsSaved as checkSavedStatus } from '../lib/api';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext';
+import { toast } from 'react-hot-toast';
+
+// Job types
+const JOB_TYPES = ['full-time', 'part-time', 'contract', 'internship'] as const;
+
+// Experience levels
+const EXPERIENCE_LEVELS = [
+  { label: 'Entry Level', value: '0-2' },
+  { label: 'Mid Level', value: '3-5' },
+  { label: 'Senior Level', value: '6-8' },
+  { label: 'Lead/Manager', value: '8+' }
+] as const;
+
+// Work modes
+const WORK_MODES = ['on-site', 'remote', 'hybrid'] as const;
+
+// Posted date options
+const POSTED_DATE_OPTIONS = [
+  { label: 'Last 24 hours', value: '24h' },
+  { label: 'Last week', value: '1w' },
+  { label: 'Last month', value: '1m' },
+  { label: 'Any time', value: 'any' }
+] as const;
+
+interface JobFilters {
+  search?: string;
+  location?: string;
+  type?: typeof JOB_TYPES[number];
+  experience?: string;
+  workMode?: typeof WORK_MODES[number];
+  salaryMin?: number;
+  salaryMax?: number;
+  postedDate?: string;
+  industry?: string;
+}
+
+function JobCard({ job }: { job: Job }) {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    
+    // Check if job is already saved
+    if (user) {
+      checkIfJobIsSaved();
+    } else {
+      setIsSaved(false); // Reset saved state when user logs out
+    }
+
+    async function checkIfJobIsSaved() {
+      try {
+        const saved = await checkSavedStatus(job.id);
+        if (mounted) {
+          setIsSaved(saved);
+        }
+      } catch (error) {
+        console.error('Error checking saved status:', error);
+        if (mounted) {
+          setIsSaved(false);
+        }
+      }
+    }
+
+    return () => {
+      mounted = false;
+    };
+  }, [user?.id, job.id]);
+
+  const handleSaveJob = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent job card click event
+
+    if (!user) {
+      toast.error('Please sign in to save jobs');
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      if (isSaved) {
+        // Get saved job id first
+        const savedJobId = await getSavedJobId(job.id);
+        if (savedJobId) {
+          await unsaveJob(savedJobId);
+          setIsSaved(false);
+          toast.success('Job removed from saved jobs');
+        }
+      } else {
+        await saveJob(user.id, job.id);
+        setIsSaved(true);
+        toast.success('Job saved successfully');
+      }
+    } catch (error) {
+      console.error('Error saving job:', error);
+      toast.error(isSaved ? 'Failed to remove job' : 'Failed to save job');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div 
+      className="bg-white rounded-lg shadow-sm hover:shadow-md transition cursor-pointer"
+      onClick={() => navigate(`/jobs/${job.id}`)}
+    >
+      <div className="p-6">
+        <div className="flex items-start justify-between">
+          <div className="flex items-start space-x-4">
+            {job.company && job.company.logo_url !== null && job.company.logo_url !== undefined && job.company.logo_url !== "" ? (
+              <img
+                src={job.company.logo_url}
+                alt={`${job.company.name} logo`}
+                className="h-12 w-12 rounded-lg object-cover"
+              />
+            ) : (
+              <div className="h-12 w-12 rounded-lg bg-gray-100 flex items-center justify-center">
+                <Building2 className="w-6 h-6 text-gray-400" />
+              </div>
+            )}
+            <div>
+              <h3 className="text-lg font-medium text-gray-900">{job.title}</h3>
+              <p className="text-sm text-gray-600">{job.company?.name}</p>
+              <div className="mt-2 flex flex-wrap gap-4">
+                <div className="flex items-center text-gray-500 text-sm">
+                  <MapPin className="w-4 h-4 mr-1" />
+                  {job.location}
+                </div>
+                {(job.salary_min || job.salary_max) && (
+                  <div className="flex items-center text-gray-500 text-sm">
+                    <Euro className="w-4 h-4 mr-1" />
+                    {job.salary_min && job.salary_max
+                      ? `${job.salary_min.toLocaleString()}€ - ${job.salary_max.toLocaleString()}€`
+                      : job.salary_min
+                      ? `From ${job.salary_min.toLocaleString()}€`
+                      : `Up to ${job.salary_max?.toLocaleString()}€`}
+                    <span className="ml-1">/ year</span>
+                  </div>
+                )}
+                <div className="flex items-center text-gray-500 text-sm">
+                  <Briefcase className="w-4 h-4 mr-1" />
+                  {job.type}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <button
+              onClick={handleSaveJob}
+              disabled={isSaving}
+              className={`p-2 rounded-lg transition ${
+                isSaved
+                  ? 'text-blue-600 hover:bg-blue-50'
+                  : 'text-gray-400 hover:bg-gray-50'
+              }`}
+              title={isSaved ? 'Remove from saved jobs' : 'Save job'}
+            >
+              <Bookmark className={`w-5 h-5 ${isSaved ? 'fill-current' : ''}`} />
+            </button>
+          </div>
+        </div>
+        <div className="mt-4">
+          <p className="text-sm text-gray-600 line-clamp-2">{job.description}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function Jobs() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchTitle, setSearchTitle] = useState(searchParams.get('search') || '');
-  const [searchLocation, setSearchLocation] = useState(searchParams.get('location') || '');
+  const [filters, setFilters] = useState<JobFilters>({
+    search: searchParams.get('search') || '',
+    location: searchParams.get('location') || '',
+    type: (searchParams.get('type') as typeof JOB_TYPES[number]) || undefined,
+    experience: searchParams.get('experience') || undefined,
+    workMode: (searchParams.get('workMode') as typeof WORK_MODES[number]) || undefined,
+    salaryMin: searchParams.get('salaryMin') ? Number(searchParams.get('salaryMin')) : undefined,
+    salaryMax: searchParams.get('salaryMax') ? Number(searchParams.get('salaryMax')) : undefined,
+    postedDate: searchParams.get('postedDate') || undefined,
+    industry: searchParams.get('industry') || undefined
+  });
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     const fetchJobs = async () => {
       try {
         setLoading(true);
         const data = await getJobs({
-          search: searchParams.get('search') || undefined,
-          location: searchParams.get('location') || undefined,
-          company_id: searchParams.get('company') || undefined
+          search: filters.search,
+          location: filters.location,
+          type: filters.type,
+          salary_min: filters.salaryMin,
+          salary_max: filters.salaryMax
         });
         setJobs(data);
       } catch (err) {
@@ -31,14 +213,19 @@ function Jobs() {
     };
 
     fetchJobs();
-  }, [searchParams]);
+  }, [filters]);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    const params = new URLSearchParams();
-    if (searchTitle) params.set('search', searchTitle);
-    if (searchLocation) params.set('location', searchLocation);
-    setSearchParams(params);
+  const handleFilterChange = (key: keyof JobFilters, value: string | number | undefined) => {
+    setFilters(prev => {
+      const newFilters = { ...prev, [key]: value };
+      // Update URL params
+      const params = new URLSearchParams();
+      Object.entries(newFilters).forEach(([k, v]) => {
+        if (v) params.set(k, String(v));
+      });
+      setSearchParams(params);
+      return newFilters;
+    });
   };
 
   if (error) {
@@ -54,18 +241,18 @@ function Jobs() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-24 page-transition">
+    <div className="min-h-screen bg-gray-50 pt-24">
       <div className="container mx-auto px-6">
         {/* Search Section */}
-        <form onSubmit={handleSearch} className="bg-white p-6 rounded-xl shadow-sm mb-8 animate-fade-in">
+        <div className="bg-white p-6 rounded-xl shadow-sm mb-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-3 text-gray-400 w-5 h-5" />
               <input
                 type="text"
                 placeholder="Job title or keyword"
-                value={searchTitle}
-                onChange={(e) => setSearchTitle(e.target.value)}
+                value={filters.search}
+                onChange={(e) => handleFilterChange('search', e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
@@ -74,19 +261,125 @@ function Jobs() {
               <input
                 type="text"
                 placeholder="Location"
-                value={searchLocation}
-                onChange={(e) => setSearchLocation(e.target.value)}
+                value={filters.location}
+                onChange={(e) => handleFilterChange('location', e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
             <button 
-              type="submit"
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-all duration-200"
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center justify-center gap-2 bg-gray-100 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-200 transition"
             >
-              Search Jobs
+              <Filter className="w-5 h-5" />
+              Filters
+              <ChevronDown className={`w-4 h-4 transform transition ${showFilters ? 'rotate-180' : ''}`} />
             </button>
           </div>
-        </form>
+
+          {/* Advanced Filters */}
+          {showFilters && (
+            <div className="mt-6 pt-6 border-t grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {/* Job Type */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Job Type
+                </label>
+                <select
+                  value={filters.type || ''}
+                  onChange={(e) => handleFilterChange('type', e.target.value || undefined)}
+                  className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">All Types</option>
+                  {JOB_TYPES.map(type => (
+                    <option key={type} value={type}>
+                      {type.charAt(0).toUpperCase() + type.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Experience Level */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Experience Level
+                </label>
+                <select
+                  value={filters.experience || ''}
+                  onChange={(e) => handleFilterChange('experience', e.target.value || undefined)}
+                  className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">All Levels</option>
+                  {EXPERIENCE_LEVELS.map(level => (
+                    <option key={level.value} value={level.value}>
+                      {level.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Work Mode */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Work Mode
+                </label>
+                <select
+                  value={filters.workMode || ''}
+                  onChange={(e) => handleFilterChange('workMode', e.target.value || undefined)}
+                  className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">All Modes</option>
+                  {WORK_MODES.map(mode => (
+                    <option key={mode} value={mode}>
+                      {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Posted Date */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Posted Date
+                </label>
+                <select
+                  value={filters.postedDate || ''}
+                  onChange={(e) => handleFilterChange('postedDate', e.target.value || undefined)}
+                  className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">Any Time</option>
+                  {POSTED_DATE_OPTIONS.map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Salary Range */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Salary Range (€)
+                </label>
+                <div className="grid grid-cols-2 gap-4">
+                  <input
+                    type="number"
+                    placeholder="Min"
+                    value={filters.salaryMin || ''}
+                    onChange={(e) => handleFilterChange('salaryMin', e.target.value ? Number(e.target.value) : undefined)}
+                    className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <input
+                    type="number"
+                    placeholder="Max"
+                    value={filters.salaryMax || ''}
+                    onChange={(e) => handleFilterChange('salaryMax', e.target.value ? Number(e.target.value) : undefined)}
+                    className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Job Listings */}
         <div className="space-y-6">
@@ -100,44 +393,7 @@ function Jobs() {
             </div>
           ) : (
             jobs.map((job) => (
-              <div
-                key={job.id}
-                className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition"
-              >
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <h3 className="text-xl font-semibold text-gray-900">{job.title}</h3>
-                    <p className="text-gray-600 mt-1">{job.company?.name}</p>
-                    <div className="flex flex-wrap gap-4 mt-3">
-                      <div className="flex items-center text-gray-500">
-                        <MapPin className="w-4 h-4 mr-1" />
-                        {job.location}
-                      </div>
-                      <div className="flex items-center text-gray-500">
-                        <Euro className="w-4 h-4 mr-1" />
-                        {job.salary_min.toLocaleString()}€ - {job.salary_max.toLocaleString()}€
-                      </div>
-                      <div className="flex items-center text-gray-500">
-                        <Clock className="w-4 h-4 mr-1" />
-                        {job.type}
-                      </div>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={() => {
-                      // TODO: Implement job application
-                      if (!user) {
-                        // TODO: Show auth modal
-                        alert('Please sign in to apply');
-                        return;
-                      }
-                    }}
-                    className="mt-4 md:mt-0 bg-blue-50 text-blue-600 px-6 py-2 rounded-lg hover:bg-blue-100 transition"
-                  >
-                    Apply Now
-                  </button>
-                </div>
-              </div>
+              <JobCard key={job.id} job={job} />
             ))
           )}
         </div>

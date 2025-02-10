@@ -3,13 +3,58 @@ import { useNavigate } from 'react-router-dom';
 import { updateProfile, getProfile } from '../lib/api';
 import { useAuth } from '../lib/AuthContext';
 import toast from 'react-hot-toast';
+import type { Profile as ProfileType } from '../lib/api';
+
+// Type for form data (all fields are required strings)
+interface ProfileFormData {
+  full_name: string;
+  headline: string;
+  bio: string;
+  location: string;
+  skills: string;
+  experience_years: string;
+  education_level: string;
+  resume_url: string;
+  linkedin_url: string;
+  github_url: string;
+  portfolio_url: string;
+  preferred_role: string;
+  preferred_location: string;
+  salary_expectation: string;
+}
+
+// Convert profile data to form data by ensuring all fields are strings
+const profileToFormData = (profile: ProfileType): ProfileFormData => ({
+  full_name: profile.full_name || '',
+  headline: profile.headline || '',
+  bio: profile.bio || '',
+  location: profile.location || '',
+  skills: Array.isArray(profile.skills) ? profile.skills.join(', ') : profile.skills || '',
+  experience_years: profile.experience_years?.toString() || '',
+  education_level: profile.education_level || '',
+  resume_url: profile.resume_url || '',
+  linkedin_url: profile.linkedin_url || '',
+  github_url: profile.github_url || '',
+  portfolio_url: profile.portfolio_url || '',
+  preferred_role: profile.preferred_role || '',
+  preferred_location: profile.preferred_location || '',
+  salary_expectation: profile.salary_expectation?.toString() || ''
+});
+
+// Convert form data back to API format
+const formDataToProfile = (formData: ProfileFormData) => ({
+  ...formData,
+  skills: formData.skills.split(',').map(skill => skill.trim()).filter(Boolean),
+  experience_years: formData.experience_years ? parseInt(formData.experience_years, 10) : null,
+  salary_expectation: formData.salary_expectation ? parseInt(formData.salary_expectation, 10) : null
+});
 
 function Profile() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<ProfileFormData>({
     full_name: '',
     headline: '',
     bio: '',
@@ -32,10 +77,7 @@ function Profile() {
         if (user) {
           const profile = await getProfile(user.id);
           if (profile) {
-            setFormData(prev => ({
-              ...prev,
-              ...profile
-            }));
+            setFormData(profileToFormData(profile));
           }
         }
       } catch (err) {
@@ -53,7 +95,9 @@ function Profile() {
     setSaving(true);
 
     try {
-      await updateProfile(user?.id as string, formData);
+      // Convert form data back to API format before sending
+      const profileData = formDataToProfile(formData);
+      await updateProfile(user?.id as string, profileData);
       toast.success('Profile updated successfully!');
       navigate('/dashboard');
     } catch (err) {
@@ -65,6 +109,15 @@ function Profile() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+    
+    // For numeric fields, only allow numbers
+    if (name === 'experience_years' || name === 'salary_expectation') {
+      if (value === '' || /^\d+$/.test(value)) {
+        setFormData(prev => ({ ...prev, [name]: value }));
+      }
+      return;
+    }
+
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
@@ -146,40 +199,38 @@ function Profile() {
 
             <div>
               <label htmlFor="skills" className="block text-sm font-medium text-gray-700">
-                Skills *
+                Skills (comma-separated)
               </label>
               <input
                 type="text"
                 id="skills"
                 name="skills"
-                required
                 value={formData.skills}
                 onChange={handleChange}
-                placeholder="e.g. JavaScript, React, Node.js, Python"
+                placeholder="e.g. JavaScript, React, TypeScript"
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
+              <p className="mt-1 text-sm text-gray-500">
+                Enter your skills separated by commas
+              </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label htmlFor="experience_years" className="block text-sm font-medium text-gray-700">
-                  Years of Experience *
+                  Years of Experience
                 </label>
-                <select
+                <input
+                  type="number"
                   id="experience_years"
                   name="experience_years"
-                  required
+                  min="0"
+                  max="50"
                   value={formData.experience_years}
                   onChange={handleChange}
+                  placeholder="e.g. 5"
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                >
-                  <option value="">Select experience</option>
-                  <option value="0-1">0-1 years</option>
-                  <option value="1-3">1-3 years</option>
-                  <option value="3-5">3-5 years</option>
-                  <option value="5-10">5-10 years</option>
-                  <option value="10+">10+ years</option>
-                </select>
+                />
               </div>
 
               <div>
@@ -296,18 +347,22 @@ function Profile() {
 
             <div>
               <label htmlFor="salary_expectation" className="block text-sm font-medium text-gray-700">
-                Expected Annual Salary (€) *
+                Expected Annual Salary (€)
               </label>
               <input
-                type="text"
+                type="number"
                 id="salary_expectation"
                 name="salary_expectation"
-                required
+                min="0"
+                step="1000"
                 value={formData.salary_expectation}
                 onChange={handleChange}
-                placeholder="e.g. 60000"
+                placeholder="e.g. 50000"
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
+              <p className="mt-1 text-sm text-gray-500">
+                Enter your expected annual salary in euros
+              </p>
             </div>
 
             <div className="flex justify-end space-x-4">
