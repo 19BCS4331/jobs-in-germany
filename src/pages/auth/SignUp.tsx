@@ -60,38 +60,51 @@ export default function SignUp() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-blue-50 flex flex-col justify-center px-4 sm:px-6 lg:px-8 relative">
+      {/* Background pattern */}
+      <div className="absolute inset-0 bg-[radial-gradient(#e0e7ff_1px,transparent_1px)] [background-size:16px_16px] opacity-50" />
+
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <Link to="/" className="absolute top-8 left-8 text-gray-600 hover:text-gray-900 flex items-center gap-2 transition-colors">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          <span>Back to Home</span>
+        </Link>
+      </div>
+      
       <motion.div 
-        className="sm:mx-auto sm:w-full sm:max-w-md mt-8 px-4 sm:px-0"
+        className="sm:mx-auto sm:w-full sm:max-w-md mt-8 px-4 sm:px-0 relative"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
         <Link to="/" className="flex justify-center mb-6">
           <img
-            className="h-10 sm:h-12 w-auto"
-            src="/logo.png"
+            className="h-12 w-auto"
+            src="/src/assets/images/logo.png"
             alt="Jobs in Germany"
           />
         </Link>
+        
         <h2 className="text-2xl sm:text-3xl font-extrabold text-center text-gray-900">
           Create your account
         </h2>
         <p className="mt-2 text-center text-sm sm:text-base text-gray-600">
-          Or{' '}
+          Already have an account?{' '}
           <Link to="/signin" className="font-medium text-indigo-600 hover:text-indigo-500">
-            sign in to your account
+            Sign in
           </Link>
         </p>
       </motion.div>
 
       <motion.div 
-        className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0"
+        className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0 relative"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.2 }}
       >
-        <div className="bg-white py-6 sm:py-8 px-4 sm:px-10 shadow sm:rounded-lg">
+        <div className="bg-white/80 backdrop-blur-sm py-8 px-4 sm:px-10 shadow-xl rounded-xl border border-gray-100">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700">
@@ -233,7 +246,7 @@ export default function SignUp() {
               <div>
                 <button
                   type="button"
-                  className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors duration-200"
+                  className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
                 >
                   <span className="sr-only">Sign up with Google</span>
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -245,7 +258,7 @@ export default function SignUp() {
               <div>
                 <button
                   type="button"
-                  className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors duration-200"
+                  className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
                 >
                   <span className="sr-only">Sign up with LinkedIn</span>
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
