@@ -115,7 +115,9 @@ function App() {
               {/* Job Seeker Routes */}
               <Route path="applications" element={<ProtectedRoute allowedUserType="job_seeker"><MyApplications /></ProtectedRoute>} />
               <Route path="saved-jobs" element={<ProtectedRoute allowedUserType="job_seeker"><SavedJobs /></ProtectedRoute>} />
-              <Route path="/dashboard/profile-settings" element={<ProtectedRoute allowedUserType="job_seeker"><ProfileSettings /></ProtectedRoute>} />
+              
+              {/* Shared Routes */}
+              <Route path="/dashboard/profile-settings" element={<ProtectedRoute><ProfileSettings /></ProtectedRoute>} />
               
               {/* Employer Routes */}
               <Route path="/dashboard/companies/manage" element={<ProtectedRoute allowedUserType="employer"><CompaniesManagement /></ProtectedRoute>} />

@@ -104,6 +104,7 @@ const ProfileSettings = () => {
     linkedin_url: ''
   });
 
+
   // Parse skills helper
   const parseProfileSkills = (skills: any): string[] => {
     if (!skills) return [];
@@ -365,26 +366,28 @@ const ProfileSettings = () => {
             </div>
             <div className="px-6 py-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Preferred Role */}
-                <div className="mb-4">
-                  <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
-                    <Briefcase className="h-4 w-4 mr-2" />
-                    Preferred Role
-                  </label>
-                  {isEditing ? (
-                    <Input
-                      name="preferred_role"
-                      value={formState.preferred_role}
-                      onChange={handleInputChange}
-                      placeholder="Software Engineer"
-                      className={inputClass}
-                    />
-                  ) : (
-                    <div className="text-sm text-gray-900">{profile.preferred_role || '-'}</div>
-                  )}
-                </div>
+                {/* Preferred Role - Only for job seekers */}
+                {profile?.user_type === 'job_seeker' && (
+                  <div className="mb-4">
+                    <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
+                      <Briefcase className="h-4 w-4 mr-2" />
+                      Preferred Role
+                    </label>
+                    {isEditing ? (
+                      <Input
+                        name="preferred_role"
+                        value={formState.preferred_role}
+                        onChange={handleInputChange}
+                        placeholder="Software Engineer"
+                        className={inputClass}
+                      />
+                    ) : (
+                      <div className="text-sm text-gray-900">{profile.preferred_role || '-'}</div>
+                    )}
+                  </div>
+                )}
 
-                {/* Years of Experience */}
+                {/* Years of Experience - For both */}
                 <div className="mb-4">
                   <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
                     <GraduationCap className="h-4 w-4 mr-2" />
@@ -404,45 +407,47 @@ const ProfileSettings = () => {
                   )}
                 </div>
 
-                {/* Skills */}
-                <div className="col-span-2">
-                  <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
-                    <Code2 className="h-4 w-4 mr-2" />
-                    Skills
-                  </label>
-                  {isEditing ? (
-                    <>
-                      <Input
-                        name="skills"
-                        value={formState.skills}
-                        onChange={handleInputChange}
-                        placeholder="React, TypeScript, Node.js"
-                        className={inputClass}
-                      />
-                      <p className="mt-1 text-xs text-gray-500">Separate skills with commas</p>
-                    </>
-                  ) : (
-                    <div className="flex flex-wrap gap-2">
-                      {(() => {
-                        const skills = parseProfileSkills(profile.skills);
-                        return skills.length > 0 ? (
-                          skills.map((skill, index) => (
-                            <span
-                              key={index}
-                              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800"
-                            >
-                              {skill.trim()}
-                            </span>
-                          ))
-                        ) : (
-                          <span className="text-sm text-gray-500">No skills listed</span>
-                        );
-                      })()}
-                    </div>
-                  )}
-                </div>
+                {/* Skills - Only for job seekers */}
+                {profile?.user_type === 'job_seeker' && (
+                  <div className="col-span-2">
+                    <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
+                      <Code2 className="h-4 w-4 mr-2" />
+                      Skills
+                    </label>
+                    {isEditing ? (
+                      <>
+                        <Input
+                          name="skills"
+                          value={formState.skills}
+                          onChange={handleInputChange}
+                          placeholder="React, TypeScript, Node.js"
+                          className={inputClass}
+                        />
+                        <p className="mt-1 text-xs text-gray-500">Separate skills with commas</p>
+                      </>
+                    ) : (
+                      <div className="flex flex-wrap gap-2">
+                        {(() => {
+                          const skills = parseProfileSkills(profile.skills);
+                          return skills.length > 0 ? (
+                            skills.map((skill, index) => (
+                              <span
+                                key={index}
+                                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800"
+                              >
+                                {skill.trim()}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-sm text-gray-500">No skills listed</span>
+                          );
+                        })()}
+                      </div>
+                    )}
+                  </div>
+                )}
 
-                {/* Bio */}
+                {/* Bio - For both */}
                 <div className="col-span-2">
                   <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
                     <Book className="h-4 w-4 mr-2" />
@@ -473,67 +478,71 @@ const ProfileSettings = () => {
             </div>
             <div className="px-6 py-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Resume URL */}
-                <div className="mb-4">
-                  <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
-                    <Book className="h-4 w-4 mr-2" />
-                    Resume URL
-                  </label>
-                  {isEditing ? (
-                    <Input
-                      type="url"
-                      name="resume_url"
-                      value={formState.resume_url}
-                      onChange={handleInputChange}
-                      placeholder="https://example.com/resume.pdf"
-                      className={inputClass}
-                    />
-                  ) : (
-                    <div className="text-sm text-gray-900">{profile.resume_url || '-'}</div>
-                  )}
-                </div>
+                {profile?.user_type === 'job_seeker' && (
+                  <>
+                    {/* Resume URL - Only for job seekers */}
+                    <div className="mb-4">
+                      <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
+                        <Book className="h-4 w-4 mr-2" />
+                        Resume URL
+                      </label>
+                      {isEditing ? (
+                        <Input
+                          type="url"
+                          name="resume_url"
+                          value={formState.resume_url}
+                          onChange={handleInputChange}
+                          placeholder="https://example.com/resume.pdf"
+                          className={inputClass}
+                        />
+                      ) : (
+                        <div className="text-sm text-gray-900">{profile.resume_url || '-'}</div>
+                      )}
+                    </div>
 
-                {/* Portfolio Website */}
-                <div className="mb-4">
-                  <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
-                    <Globe className="h-4 w-4 mr-2" />
-                    Portfolio Website
-                  </label>
-                  {isEditing ? (
-                    <Input
-                      type="url"
-                      name="portfolio_url"
-                      value={formState.portfolio_url}
-                      onChange={handleInputChange}
-                      placeholder="https://portfolio.example.com"
-                      className={inputClass}
-                    />
-                  ) : (
-                    <div className="text-sm text-gray-900">{profile.portfolio_url || '-'}</div>
-                  )}
-                </div>
+                    {/* Portfolio Website - Only for job seekers */}
+                    <div className="mb-4">
+                      <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
+                        <Globe className="h-4 w-4 mr-2" />
+                        Portfolio Website
+                      </label>
+                      {isEditing ? (
+                        <Input
+                          type="url"
+                          name="portfolio_url"
+                          value={formState.portfolio_url}
+                          onChange={handleInputChange}
+                          placeholder="https://portfolio.example.com"
+                          className={inputClass}
+                        />
+                      ) : (
+                        <div className="text-sm text-gray-900">{profile.portfolio_url || '-'}</div>
+                      )}
+                    </div>
 
-                {/* GitHub Profile */}
-                <div className="mb-4">
-                  <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
-                    <Github className="h-4 w-4 mr-2" />
-                    GitHub Profile
-                  </label>
-                  {isEditing ? (
-                    <Input
-                      type="url"
-                      name="github_url"
-                      value={formState.github_url}
-                      onChange={handleInputChange}
-                      placeholder="https://github.com/username"
-                      className={inputClass}
-                    />
-                  ) : (
-                    <div className="text-sm text-gray-900">{profile.github_url || '-'}</div>
-                  )}
-                </div>
+                    {/* GitHub Profile - Only for job seekers */}
+                    <div className="mb-4">
+                      <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
+                        <Github className="h-4 w-4 mr-2" />
+                        GitHub Profile
+                      </label>
+                      {isEditing ? (
+                        <Input
+                          type="url"
+                          name="github_url"
+                          value={formState.github_url}
+                          onChange={handleInputChange}
+                          placeholder="https://github.com/username"
+                          className={inputClass}
+                        />
+                      ) : (
+                        <div className="text-sm text-gray-900">{profile.github_url || '-'}</div>
+                      )}
+                    </div>
+                  </>
+                )}
 
-                {/* LinkedIn Profile */}
+                {/* LinkedIn Profile - For both */}
                 <div className="mb-4">
                   <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
                     <Linkedin className="h-4 w-4 mr-2" />
