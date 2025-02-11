@@ -1,32 +1,41 @@
-import React, { useState, useEffect } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import Navbar from './components/Navbar';
-import Home from './pages/Home';
-import Jobs from './pages/Jobs';
-import Companies from './pages/Companies';
-import Resources from './pages/Resources';
-import Blog from './pages/Blog';
-import Profile from './pages/Profile';
-import ProfileSettings from './pages/dashboard/Profile';
-import NewCompany from './pages/company/New';
-import EditCompany from './pages/company/Edit';
-import DashboardLayout from './components/DashboardLayout';
-import EmployerDashboard from './pages/dashboard/EmployerDashboard';
-import JobSeekerDashboard from './pages/dashboard/JobSeekerDashboard';
-import CompaniesManagement from './pages/dashboard/CompaniesManagement';
-import CompanyForm from './pages/dashboard/CompanyForm';
-import JobsManagement from './pages/dashboard/JobsManagement';
-import JobPostingForm from './pages/dashboard/JobPostingForm';
-import ApplicationsManagement from './pages/dashboard/ApplicationsManagement';
-import MyApplications from './pages/dashboard/MyApplications';
-import JobDetails from './pages/JobDetails';
-import SavedJobs from './pages/dashboard/SavedJobs';
-import Settings from './pages/dashboard/Settings';
-import { AuthProvider, useAuth } from './lib/AuthContext';
-import { SavedJobsProvider } from './contexts/SavedJobsContext';
+import React, { useState, useEffect } from "react";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import Navbar from "./components/Navbar";
+import Home from "./pages/Home";
+import Jobs from "./pages/Jobs";
+import Companies from "./pages/Companies";
+import Resources from "./pages/Resources";
+import Blog from "./pages/Blog";
+import Profile from "./pages/Profile";
+import ProfileSettings from "./pages/dashboard/Profile";
+import NewCompany from "./pages/company/New";
+import EditCompany from "./pages/company/Edit";
+import DashboardLayout from "./components/DashboardLayout";
+import EmployerDashboard from "./pages/dashboard/EmployerDashboard";
+import JobSeekerDashboard from "./pages/dashboard/JobSeekerDashboard";
+import CompaniesManagement from "./pages/dashboard/CompaniesManagement";
+import CompanyForm from "./pages/dashboard/CompanyForm";
+import JobsManagement from "./pages/dashboard/JobsManagement";
+import JobPostingForm from "./pages/dashboard/JobPostingForm";
+import ApplicationsManagement from "./pages/dashboard/ApplicationsManagement";
+import MyApplications from "./pages/dashboard/MyApplications";
+import JobDetails from "./pages/JobDetails";
+import SavedJobs from "./pages/dashboard/SavedJobs";
+import Settings from "./pages/dashboard/Settings";
+import { AuthProvider, useAuth } from "./lib/AuthContext";
+import { SavedJobsProvider } from "./contexts/SavedJobsContext";
+import AuthLayout from "./pages/auth/AuthLayout";
+import SignIn from "./pages/auth/SignIn";
+import SignUp from "./pages/auth/SignUp";
 
 // Protected route component
-const ProtectedRoute = ({ children, allowedUserType }: { children: React.ReactNode, allowedUserType?: 'employer' | 'job_seeker' }) => {
+const ProtectedRoute = ({
+  children,
+  allowedUserType,
+}: {
+  children: React.ReactNode;
+  allowedUserType?: "employer" | "job_seeker";
+}) => {
   const { user, profile, loading } = useAuth();
   const [localLoading, setLocalLoading] = useState(true);
 
@@ -51,12 +60,16 @@ const ProtectedRoute = ({ children, allowedUserType }: { children: React.ReactNo
   }
 
   if (!user) {
-    return <div className="min-h-screen flex items-center justify-center">Please sign in to access this page.</div>;
+    return <Navigate to="/signin" replace />;
   }
 
   // Only check user type if profile is loaded and we have an allowed type
   if (profile && allowedUserType && profile.user_type !== allowedUserType) {
-    return <div className="min-h-screen flex items-center justify-center">You don't have permission to access this page.</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        You don't have permission to access this page.
+      </div>
+    );
   }
 
   return <>{children}</>;
@@ -82,29 +95,38 @@ const DashboardIndex = () => {
     );
   }
 
-  return profile.user_type === 'employer' ? <EmployerDashboard /> : <JobSeekerDashboard />;
+  return profile.user_type === "employer" ? (
+    <EmployerDashboard />
+  ) : (
+    <JobSeekerDashboard />
+  );
 };
 
 function App() {
+  const location = useLocation();
+  const isAuthPage = ['/signin', '/signup'].includes(location.pathname);
+
   return (
     <AuthProvider>
       <SavedJobsProvider>
         <>
-          <Navbar />
+          {!isAuthPage && <Navbar />}
           <Routes>
+            {/* Public routes */}
             <Route path="/" element={<Home />} />
             <Route path="/jobs" element={<Jobs />} />
             <Route path="/jobs/:id" element={<JobDetails />} />
             <Route path="/companies" element={<Companies />} />
             <Route path="/resources" element={<Resources />} />
             <Route path="/blog" element={<Blog />} />
-            
-            {/* Protected routes */}
-            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-            <Route path="/company/new" element={<ProtectedRoute allowedUserType="employer"><NewCompany /></ProtectedRoute>} />
-            
 
-            {/* Dashboard Routes */}
+            {/* Auth routes */}
+            <Route element={<AuthLayout />}>
+              <Route path="/signin" element={<SignIn />} />
+              <Route path="/signup" element={<SignUp />} />
+            </Route>
+
+            {/* Protected routes */}
             <Route
               path="/dashboard"
               element={
@@ -114,28 +136,98 @@ function App() {
               }
             >
               <Route index element={<DashboardIndex />} />
-              
-              {/* Job Seeker Routes */}
-              <Route path="applications" element={<ProtectedRoute allowedUserType="job_seeker"><MyApplications /></ProtectedRoute>} />
-              <Route path="saved-jobs" element={<ProtectedRoute allowedUserType="job_seeker"><SavedJobs /></ProtectedRoute>} />
-              
-              {/* Shared Routes */}
-              <Route path="/dashboard/profile-settings" element={<ProtectedRoute><ProfileSettings /></ProtectedRoute>} />
-              <Route path="/dashboard/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-              
-              
-              {/* Employer Routes */}
-              <Route path="/dashboard/companies/manage" element={<ProtectedRoute allowedUserType="employer"><CompaniesManagement /></ProtectedRoute>} />
-              <Route path="/dashboard/companies/new" element={<ProtectedRoute allowedUserType="employer"><CompanyForm /></ProtectedRoute>} />
-              <Route path="/dashboard/companies/edit/:id" element={<ProtectedRoute allowedUserType="employer"><EditCompany /></ProtectedRoute>} />
-              <Route path="/dashboard/companies/:id/edit" element={<ProtectedRoute allowedUserType="employer"><CompanyForm /></ProtectedRoute>} />
-              <Route path="/dashboard/jobs/manage" element={<ProtectedRoute allowedUserType="employer"><JobsManagement /></ProtectedRoute>} />
-              <Route path="/dashboard/jobs/new" element={<ProtectedRoute allowedUserType="employer"><JobPostingForm /></ProtectedRoute>} />
-              <Route path="/dashboard/jobs/:id/edit" element={<ProtectedRoute allowedUserType="employer"><JobPostingForm /></ProtectedRoute>} />
-              <Route path="/dashboard/applications/manage" element={<ProtectedRoute allowedUserType="employer"><ApplicationsManagement /></ProtectedRoute>} />
+              <Route path="profile-settings" element={<ProfileSettings />} />
+              <Route path="settings" element={<Settings />} />
+
+              {/* Job seeker routes */}
+              <Route
+                path="saved-jobs"
+                element={
+                  <ProtectedRoute allowedUserType="job_seeker">
+                    <SavedJobs />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="applications"
+                element={
+                  <ProtectedRoute allowedUserType="job_seeker">
+                    <MyApplications />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Employer routes */}
+              <Route
+                path="companies/manage"
+                element={
+                  <ProtectedRoute allowedUserType="employer">
+                    <CompaniesManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="companies/new"
+                element={
+                  <ProtectedRoute allowedUserType="employer">
+                    <CompanyForm />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="companies/edit/:id"
+                element={
+                  <ProtectedRoute allowedUserType="employer">
+                    <EditCompany />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="jobs/manage"
+                element={
+                  <ProtectedRoute allowedUserType="employer">
+                    <JobsManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="jobs/new"
+                element={
+                  <ProtectedRoute allowedUserType="employer">
+                    <JobPostingForm />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="jobs/:id/edit"
+                element={
+                  <ProtectedRoute allowedUserType="employer">
+                    <JobPostingForm />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="applications/manage"
+                element={
+                  <ProtectedRoute allowedUserType="employer">
+                    <ApplicationsManagement />
+                  </ProtectedRoute>
+                }
+              />
             </Route>
 
-            {/* Catch all route */}
+            {/* Company management routes */}
+            <Route
+              path="/company/new"
+              element={
+                <ProtectedRoute allowedUserType="employer">
+                  <NewCompany />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Catch all */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </>

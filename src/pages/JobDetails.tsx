@@ -116,7 +116,7 @@ function JobDetails() {
   const handleSaveJob = async (e: React.MouseEvent) => {
     e.preventDefault();
     if (!user || !job) {
-      toast.error('Please sign in to save jobs');
+      navigate('/signin');
       return;
     }
 
@@ -146,7 +146,7 @@ function JobDetails() {
 
   const handleApply = () => {
     if (!user) {
-      toast.error('Please sign in to apply for jobs');
+      navigate('/signin');
       return;
     }
     setShowApplicationModal(true);

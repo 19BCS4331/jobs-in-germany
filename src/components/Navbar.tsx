@@ -1,17 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, Link } from 'react-router-dom';
 import { Menu, X, Briefcase, LogOut, User, ChevronDown, Loader2, Settings, Building2, Layout, FileText, BookOpen } from 'lucide-react';
-import toast, { Toaster } from 'react-hot-toast';
-import AuthModal from './AuthModal';
+import toast from 'react-hot-toast';
 import { signOut } from '../lib/auth';
 import { useAuth } from '../lib/AuthContext';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
-  const { user,profile } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -43,6 +41,7 @@ const Navbar = () => {
           borderRadius: '8px',
         },
       });
+      navigate('/');
     } catch (error) {
       console.error('Error signing out:', error);
       toast.error('Failed to sign out. Please try again.', {
@@ -163,12 +162,20 @@ const Navbar = () => {
                 )}
               </div>
             ) : (
-              <button
-                onClick={() => setShowAuthModal(true)}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
-              >
-                Sign in
-              </button>
+              <div className="flex items-center space-x-4">
+                <Link
+                  to="/signin"
+                  className="text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors duration-200"
+                >
+                  Sign in
+                </Link>
+                <Link
+                  to="/signup"
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
+                >
+                  Get Started
+                </Link>
+              </div>
             )}
           </div>
 
@@ -208,56 +215,63 @@ const Navbar = () => {
                 {item.label}
               </NavLink>
             ))}
-            {user ? (
+            {!user && (
               <>
-                <div className="pt-4 pb-3 border-t border-gray-200">
-                  <div className="px-3 space-y-1">
-                    {profileMenuItems.map((item) => (
-                      <button
-                        key={item.path}
-                        onClick={() => {
-                          navigate(item.path);
-                          toggleMenu();
-                        }}
-                        className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 flex items-center space-x-2 transition-colors duration-200"
-                      >
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.label}</span>
-                      </button>
-                    ))}
-                    <button
-                      onClick={handleSignOut}
-                      disabled={isSigningOut}
-                      className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 flex items-center space-x-2 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isSigningOut ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <LogOut className="h-4 w-4" />
-                      )}
-                      <span>{isSigningOut ? 'Signing out...' : 'Sign out'}</span>
-                    </button>
-                  </div>
-                </div>
+                <Link
+                  to="/signin"
+                  onClick={toggleMenu}
+                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 transition-colors duration-200"
+                >
+                  Sign in
+                </Link>
+                <Link
+                  to="/signup"
+                  onClick={toggleMenu}
+                  className="block px-3 py-2 rounded-md text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors duration-200"
+                >
+                  Get Started
+                </Link>
               </>
-            ) : (
-              <button
-                onClick={() => {
-                  setShowAuthModal(true);
-                  toggleMenu();
-                }}
-                className="w-full mt-4 px-4 py-2 text-center text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md transition-colors duration-200"
-              >
-                Sign in
-              </button>
             )}
           </div>
+          {user && (
+            <div className="pt-4 pb-3 border-t border-gray-200">
+              <div className="flex items-center px-5">
+                <div className="flex-shrink-0">
+                  <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                    <User className="h-6 w-6 text-indigo-600" />
+                  </div>
+                </div>
+                <div className="ml-3">
+                  <div className="text-base font-medium text-gray-800">
+                    {profile && profile.full_name!=='' && profile.full_name!==null ? profile.full_name : user.email?.split('@')[0]}
+                  </div>
+                  <div className="text-sm font-medium text-gray-500">{user.email}</div>
+                </div>
+              </div>
+              <div className="mt-3 px-2 space-y-1">
+                {profileMenuItems.map((item) => (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={toggleMenu}
+                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 transition-colors duration-200"
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+                <button
+                  onClick={handleSignOut}
+                  disabled={isSigningOut}
+                  className="w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 transition-colors duration-200 disabled:opacity-50"
+                >
+                  {isSigningOut ? 'Signing out...' : 'Sign out'}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
-
-      {/* Auth Modal */}
-      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
-      <Toaster />
     </nav>
   );
 };
