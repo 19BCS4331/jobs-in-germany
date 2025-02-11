@@ -41,6 +41,7 @@ export interface Job {
   company_id: string;
   created_at?: string;
   company?: CompanyBasic | null;
+  applications_count?: number | null;
 }
 
 export interface JobWithFullCompany extends Omit<Job, 'company'> {
@@ -121,53 +122,98 @@ export interface SavedJob {
   job?: Job | null;
 }
 
-// Helper type for Supabase nested relations
-type SupabaseJob = Omit<Job, 'company'> & {
-  company: CompanyBasic[] | null;
-};
-
-type SupabaseJobWithFullCompany = Omit<Job, 'company'> & {
-  company: Company[] | null;
-};
-
-type SupabaseApplication = Omit<Application, 'job' | 'user'> & {
-  job?: null;
-  user: ProfileBasic[] | null;
-};
-
-type SupabaseApplicationWithJob = Omit<Application, 'job' | 'user'> & {
-  job: (Omit<Job, 'company'> & { company: CompanyBasic[] | null })[] | null;
-  user?: null;
-};
-
-// Helper functions to transform Supabase response types to our types
-function transformJob(job: SupabaseJob): Job {
-  return {
-    ...job,
-    company: job.company?.[0] || null
-  };
+// Helper types for Supabase nested relations
+interface SupabaseJob extends Omit<Job, 'company'> {
+  companies?: {
+    id: string;
+    name: string;
+    logo_url: string | null;
+  } | null;
+  job_applications?: {
+    count: number;
+  } | null;
 }
 
-function transformJobWithFullCompany(job: SupabaseJobWithFullCompany): JobWithFullCompany {
+interface SupabaseApplication extends Omit<Application, 'job' | 'user'> {
+  profiles?: {
+    id: string;
+    full_name: string | null;
+    email: string;
+    headline: string | null;
+    resume_url: string | null;
+  } | null;
+}
+
+interface SupabaseApplicationWithJob extends Omit<Application, 'job' | 'user'> {
+  jobs?: {
+    id: string;
+    title: string;
+    description: string;
+    location: string;
+    type: JobType;
+    requirements: string[];
+    company_id: string;
+    salary_min?: number;
+    salary_max?: number;
+    companies?: {
+      id: string;
+      name: string;
+      logo_url: string | null;
+    } | null;
+  } | null;
+}
+
+// Job type enum
+type JobType = 'full-time' | 'part-time' | 'contract' | 'internship';
+
+// Helper functions to transform Supabase response types to our types
+function transformJob(job: any): Job {
+  const companyData = Array.isArray(job.companies) ? job.companies[0] : job.companies;
+  const { companies, applications_count, ...rest } = job;
+  
   return {
-    ...job,
-    company: job.company?.[0] || null
+    ...rest,
+    company: companyData ? {
+      id: companyData.id,
+      name: companyData.name,
+      logo_url: companyData.logo_url
+    } : null
   };
 }
 
 function transformApplication(app: SupabaseApplication): Application {
+  const { profiles, ...rest } = app;
   return {
-    ...app,
-    user: app.user?.[0] || null
+    ...rest,
+    user: profiles ? {
+      id: profiles.id,
+      full_name: profiles.full_name,
+      email: profiles.email,
+      headline: profiles.headline,
+      resume_url: profiles.resume_url
+    } : null
   };
 }
 
 function transformApplicationWithJob(app: SupabaseApplicationWithJob): Application {
+  const { jobs, ...rest } = app;
   return {
-    ...app,
-    job: app.job?.[0] ? {
-      ...app.job[0],
-      company: app.job[0].company?.[0] || null
+    ...rest,
+    job: jobs ? {
+      id: jobs.id,
+      title: jobs.title,
+      description: jobs.description,
+      location: jobs.location,
+      type: jobs.type as JobType,
+      requirements: jobs.requirements,
+      company_id: jobs.company_id,
+      salary_min: jobs.salary_min || null,
+      salary_max: jobs.salary_max || null,
+      company: jobs.companies ? {
+        id: jobs.companies.id,
+        name: jobs.companies.name,
+        logo_url: jobs.companies.logo_url
+      } : null
     } : null
   };
 }
@@ -313,10 +359,32 @@ export async function createCompany(company: Omit<Company, 'id' | 'created_at'>)
 export async function updateCompany(id: string, company: Partial<Omit<Company, 'id' | 'created_at'>>): Promise<Company> {
   const { data, error } = await supabase
     .from('companies')
-    .update(company)
+    .update({
+      name: company.name,
+      description: company.description,
+      website: company.website,
+      location: company.location,
+      size: company.size,
+      industry: company.industry,
+      logo_url: company.logo_url,
+      founded_year: company.founded_year,
+      headquarters: company.headquarters,
+      funding_stage: company.funding_stage,
+      mission: company.mission,
+      values: company.values,
+      culture: company.culture,
+      benefits: company.benefits,
+      tech_stack: company.tech_stack,
+      linkedin_url: company.linkedin_url,
+      twitter_url: company.twitter_url,
+      facebook_url: company.facebook_url,
+      owner_id: company.owner_id
+    })
     .eq('id', id)
     .select(`
-      id,
+      *,
+      owner_id,
+      created_at,
       name,
       description,
       website,
@@ -324,9 +392,6 @@ export async function updateCompany(id: string, company: Partial<Omit<Company, '
       size,
       industry,
       logo_url,
-      owner_id,
-      created_at,
-      star_rating,
       founded_year,
       headquarters,
       funding_stage,
@@ -387,7 +452,7 @@ export async function getJobs(filters?: {
       .from('jobs')
       .select(`
         *,
-        company:companies!inner (
+        companies:companies!company_id (
           id,
           name,
           logo_url
@@ -425,14 +490,7 @@ export async function getJobs(filters?: {
       throw error;
     }
 
-    return (data as any[]).map(job => ({
-      ...job,
-      company: job.company ? {
-        id: job.company.id,
-        name: job.company.name,
-        logo_url: job.company.logo_url
-      } : null
-    })) as Job[];
+    return (data as any[]).map(job => transformJob(job));
   } catch (error) {
     console.error('Error in getJobs:', error);
     throw error;
@@ -445,20 +503,17 @@ export async function getJob(id: string): Promise<Job | null> {
       .from('jobs')
       .select(`
         *,
-        company:companies!inner (
+        companies:companies!company_id (
           id,
           name,
-          logo_url,
-          description,
-          website,
-          location
+          logo_url
         )
       `)
       .eq('id', id)
       .single();
 
     if (error) {
-      console.error('Error fetching job:', error);
+      console.error('Error in getJob:', error);
       throw error;
     }
 
@@ -466,17 +521,7 @@ export async function getJob(id: string): Promise<Job | null> {
       return null;
     }
 
-    return {
-      ...data,
-      company: data.company ? {
-        id: data.company.id,
-        name: data.company.name,
-        logo_url: data.company.logo_url,
-        description: data.company.description,
-        website: data.company.website,
-        location: data.company.location
-      } : null
-    } as Job;
+    return transformJob(data);
   } catch (error) {
     console.error('Error in getJob:', error);
     throw error;
@@ -484,24 +529,17 @@ export async function getJob(id: string): Promise<Job | null> {
 }
 
 export async function getJobsByCompany(companyId: string): Promise<Job[]> {
+  console.log('Fetching jobs for company:', companyId);
   const { data, error } = await supabase
     .from('jobs')
     .select(`
-      id,
-      title,
-      description,
-      location,
-      type,
-      salary_min,
-      salary_max,
-      requirements,
-      company_id,
-      created_at,
-      company:companies (
+      *,
+      companies:companies!company_id (
         id,
         name,
         logo_url
-      )
+      ),
+      applications_count:job_applications(count)
     `)
     .eq('company_id', companyId)
     .order('created_at', { ascending: false });
@@ -511,7 +549,10 @@ export async function getJobsByCompany(companyId: string): Promise<Job[]> {
     throw error;
   }
 
-  return (data as SupabaseJob[]).map(transformJob);
+  return (data as any[]).map(job => ({
+    ...transformJob(job),
+    applications_count: job.applications_count?.[0]?.count || 0
+  }));
 }
 
 export async function createJob(job: Omit<Job, 'id' | 'created_at' | 'company'>): Promise<Job> {
@@ -519,17 +560,8 @@ export async function createJob(job: Omit<Job, 'id' | 'created_at' | 'company'>)
     .from('jobs')
     .insert([job])
     .select(`
-      id,
-      title,
-      description,
-      location,
-      type,
-      salary_min,
-      salary_max,
-      requirements,
-      company_id,
-      created_at,
-      company:companies (
+      *,
+      companies:companies!company_id (
         id,
         name,
         logo_url
@@ -542,7 +574,7 @@ export async function createJob(job: Omit<Job, 'id' | 'created_at' | 'company'>)
     throw error;
   }
 
-  return transformJob(data as SupabaseJob);
+  return transformJob(data);
 }
 
 export async function updateJob(id: string, job: Partial<Omit<Job, 'id' | 'created_at' | 'company'>>): Promise<Job> {
@@ -551,17 +583,8 @@ export async function updateJob(id: string, job: Partial<Omit<Job, 'id' | 'creat
     .update(job)
     .eq('id', id)
     .select(`
-      id,
-      title,
-      description,
-      location,
-      type,
-      salary_min,
-      salary_max,
-      requirements,
-      company_id,
-      created_at,
-      company:companies (
+      *,
+      companies:companies!company_id (
         id,
         name,
         logo_url
@@ -574,7 +597,7 @@ export async function updateJob(id: string, job: Partial<Omit<Job, 'id' | 'creat
     throw error;
   }
 
-  return transformJob(data as SupabaseJob);
+  return transformJob(data);
 }
 
 export async function deleteJob(id: string): Promise<boolean> {
@@ -854,6 +877,86 @@ export async function updateApplicationStatus(applicationId: string, status: App
   return transformApplication(data as SupabaseApplication);
 }
 
+export async function getApplicationsByCompany(companyId: string): Promise<Application[]> {
+  const { data, error } = await supabase
+    .from('job_applications')
+    .select(`
+      *,
+      jobs!job_id (
+        id,
+        title,
+        company_id,
+        companies!company_id (
+          id,
+          name,
+          logo_url
+        )
+      ),
+      profiles!user_id (
+        id,
+        full_name,
+        email,
+        headline,
+        resume_url
+      )
+    `)
+    .eq('jobs.company_id', companyId);
+
+  if (error) {
+    console.error('Error fetching company applications:', error);
+    throw error;
+  }
+
+  return data.map(app => ({
+    ...app,
+    job: app.jobs ? {
+      ...app.jobs,
+      company: app.jobs.companies
+    } : null,
+    user: app.profiles
+  }));
+}
+
+export async function getApplicationsByJob(jobId: string): Promise<Application[]> {
+  const { data, error } = await supabase
+    .from('job_applications')
+    .select(`
+      *,
+      jobs!job_id (
+        id,
+        title,
+        company_id,
+        companies!company_id (
+          id,
+          name,
+          logo_url
+        )
+      ),
+      profiles!user_id (
+        id,
+        full_name,
+        email,
+        headline,
+        resume_url
+      )
+    `)
+    .eq('job_id', jobId);
+
+  if (error) {
+    console.error('Error fetching job applications:', error);
+    throw error;
+  }
+
+  return data.map(app => ({
+    ...app,
+    job: app.jobs ? {
+      ...app.jobs,
+      company: app.jobs.companies
+    } : null,
+    user: app.profiles
+  }));
+}
+
 // Job Bookmarks
 export async function getSavedJobs(userId: string): Promise<SavedJob[]> {
   const { data, error } = await supabase
@@ -1006,3 +1109,20 @@ export async function checkIfJobApplied(jobId: string): Promise<boolean> {
     return false;
   }
 }
+
+// Query keys for React Query
+export const queryKeys = {
+  jobs: {
+    all: ['jobs'] as const,
+    byCompany: (companyId: string) => ['jobs', 'company', companyId] as const,
+    detail: (jobId: string) => ['jobs', jobId] as const,
+  },
+  applications: {
+    all: ['applications'] as const,
+    byCompany: (companyId: string) => ['applications', 'company', companyId] as const,
+    byJob: (jobId: string) => ['applications', 'job', jobId] as const,
+  },
+  company: {
+    byOwner: (ownerId: string) => ['company', 'owner', ownerId] as const,
+  },
+} as const;

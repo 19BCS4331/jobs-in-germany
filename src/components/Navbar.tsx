@@ -61,14 +61,8 @@ const Navbar = () => {
 
   const profileMenuItems = profile?.user_type === 'employer' ? [
     { icon: Layout, label: 'Dashboard', path: '/dashboard' },
-    { icon: Building2, label: 'My Companies', path: '/companies/manage' },
-    { icon: FileText, label: 'Job Postings', path: '/jobs/manage' },
-    { icon: Settings, label: 'Settings', path: '/settings' },
   ] : [
     { icon: Layout, label: 'Dashboard', path: '/dashboard' },
-    { icon: FileText, label: 'My Applications', path: '/applications' },
-    { icon: BookOpen, label: 'Saved Jobs', path: '/saved-jobs' },
-    { icon: Settings, label: 'Settings', path: '/settings' },
   ];
 
   return (

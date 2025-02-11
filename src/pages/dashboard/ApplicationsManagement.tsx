@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Clock, CheckCircle, XCircle, AlertCircle, Building2, User, Calendar, FileText } from 'lucide-react';
 import { useAuth } from '../../lib/AuthContext';
-import { getJobApplications, updateApplicationStatus, getCompanyByOwner, getJobsByCompany, Application } from '../../lib/api';
+import { getJobApplications, updateApplicationStatus, getCompanyByOwner, getJobsByCompany, getApplicationsByJob, getApplicationsByCompany, Application, Job, queryKeys } from '../../lib/api';
 import { toast } from 'react-hot-toast';
-import type { Company, Job } from '../../lib/api';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const statusColors = {
   pending: 'bg-yellow-100 text-yellow-800',
@@ -34,85 +34,57 @@ const ApplicationsManagement: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
-  const [applications, setApplications] = useState<Application[]>([]);
-  const [selectedJobId, setSelectedJobId] = useState<string>('');
-  const [jobs, setJobs] = useState<Job[]>([]);
+  const queryClient = useQueryClient();
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
+  const jobId = searchParams.get('jobId') || '';
 
-  // Load company and jobs only once when component mounts
-  useEffect(() => {
-    const loadInitialData = async () => {
-      if (!user) return;
-      
-      try {
-        const company = await getCompanyByOwner(user.id);
-        if (!company || !company.id) {
-          toast.error('No company found. Please create a company first.');
-          navigate('/dashboard/companies/new');
-          return;
-        }
+  // Get company data
+  const { data: company } = useQuery({
+    queryKey: queryKeys.company.byOwner(user?.id || ''),
+    queryFn: () => getCompanyByOwner(user?.id || ''),
+    enabled: !!user,
+  });
 
-        const jobsData = await getJobsByCompany(company.id);
-        setJobs(jobsData);
+  // Get jobs data
+  const { data: jobs = [] } = useQuery({
+    queryKey: queryKeys.jobs.byCompany(company?.id || ''),
+    queryFn: () => getJobsByCompany(company?.id || ''),
+    enabled: !!company,
+  });
 
-        // Set the selected job ID from URL params or first job
-        const jobIdFromUrl = searchParams.get('jobId');
-        const initialJobId = jobIdFromUrl && jobsData.some(job => job.id === jobIdFromUrl)
-          ? jobIdFromUrl
-          : jobsData.length > 0 ? jobsData[0].id : '';
-        
-        setSelectedJobId(initialJobId);
+  // Get applications data
+  const { data: applications = [], isLoading } = useQuery({
+    queryKey: jobId ? queryKeys.applications.byJob(jobId) : queryKeys.applications.byCompany(company?.id || ''),
+    queryFn: () => jobId ? getApplicationsByJob(jobId) : getApplicationsByCompany(company?.id || ''),
+    enabled: !!company,
+  });
 
-        if (initialJobId) {
-          const applications = await getJobApplications(initialJobId);
-          setApplications(applications);
-        }
-      } catch (error) {
-        console.error('Error loading initial data:', error);
-        toast.error('Failed to load data');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadInitialData();
-  }, [user, navigate, searchParams]);
-
-  // Load applications when selected job changes
-  const handleJobChange = async (jobId: string) => {
-    setSelectedJobId(jobId);
-    setIsLoading(true);
+  const handleStatusChange = async (applicationId: string, newStatus: string) => {
     try {
-      const applications = await getJobApplications(jobId);
-      setApplications(applications);
-    } catch (error) {
-      console.error('Error loading applications:', error);
-      toast.error('Failed to load applications');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleStatusChange = async (applicationId: string, newStatus: ApplicationStatus) => {
-    try {
-      await updateApplicationStatus(applicationId, newStatus);
-      setApplications(apps => 
-        apps.map(app => 
-          app.id === applicationId ? { ...app, status: newStatus } : app
-        )
-      );
+      await updateApplicationStatus(applicationId, newStatus as any);
+      // Invalidate applications query to refetch
+      queryClient.invalidateQueries({ 
+        queryKey: jobId ? queryKeys.applications.byJob(jobId) : queryKeys.applications.byCompany(company?.id || '')
+      });
       toast.success('Application status updated');
     } catch (error) {
       console.error('Error updating application status:', error);
-      toast.error('Failed to update application status');
+      toast.error('Failed to update status');
+    }
+  };
+
+  const handleJobChange = (newJobId: string) => {
+    if (newJobId) {
+      navigate(`/dashboard/applications/manage?jobId=${newJobId}`);
+    } else {
+      navigate('/dashboard/applications/manage');
     }
   };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Clock className="h-8 w-8 animate-spin text-indigo-600" />
+      <div className="flex justify-center items-center min-h-[200px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
       </div>
     );
   }
@@ -134,11 +106,11 @@ const ApplicationsManagement: React.FC = () => {
         </label>
         <select
           id="job-filter"
-          value={selectedJobId}
+          value={jobId}
           onChange={(e) => handleJobChange(e.target.value)}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
         >
-          <option value="">Select a job</option>
+          <option value="">All Jobs</option>
           {jobs.map((job) => (
             <option key={job.id} value={job.id}>
               {job.title}
@@ -154,7 +126,7 @@ const ApplicationsManagement: React.FC = () => {
             <User className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">No applications</h3>
             <p className="mt-1 text-sm text-gray-500">
-              {selectedJobId ? 'There are no applications for this job posting yet.' : 'Please select a job to view applications.'}
+              {jobId ? 'There are no applications for this job posting yet.' : 'Please select a job to view applications.'}
             </p>
           </div>
         ) : (

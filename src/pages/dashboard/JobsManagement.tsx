@@ -1,52 +1,37 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Briefcase, Plus, MoreVertical, Pencil, Trash2, Eye, Users, Clock } from 'lucide-react';
+import { Briefcase, Plus, MoreVertical, PencilIcon, TrashIcon, Eye, Users, Clock } from 'lucide-react';
 import { useAuth } from '../../lib/AuthContext';
 import ConfirmDialog from '../../components/ConfirmDialog';
-import { Job, getJobsByCompany, deleteJob, getCompanyByOwner } from '../../lib/api';
+import { Job, deleteJob, getCompanyByOwner, getJobsByCompany, queryKeys } from '../../lib/api';
 import { toast } from 'react-hot-toast';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const JobsManagement: React.FC = () => {
   const navigate = useNavigate();
-  const { profile, user } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
-  const [jobs, setJobs] = useState<Job[]>([]);
+  const { user, profile } = useAuth();
+  const queryClient = useQueryClient();
+  const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
-  const [showDropdown, setShowDropdown] = useState<string | null>(null);
-  const [companyId, setCompanyId] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadCompanyAndJobs();
-  }, [user]);
+  // Get company data
+  const { data: company } = useQuery({
+    queryKey: queryKeys.company.byOwner(user?.id || ''),
+    queryFn: () => getCompanyByOwner(user?.id || ''),
+    enabled: !!user,
+  });
 
-  const loadCompanyAndJobs = async () => {
-    if (!user || !profile || profile.user_type !== 'employer') return;
+  // Get jobs data
+  const { data: jobs = [], isLoading } = useQuery({
+    queryKey: queryKeys.jobs.byCompany(company?.id || ''),
+    queryFn: () => getJobsByCompany(company?.id || ''),
+    enabled: !!company,
+  });
 
-    try {
-      setIsLoading(true);
-      // First get the company
-      const company = await getCompanyByOwner(user.id);
-      if (!company) {
-        toast.error('No company found. Please create a company first.');
-        navigate('/dashboard/companies/new');
-        return;
-      }
-      setCompanyId(company.id);
-      
-      // Then get the jobs for this company
-      const jobsData = await getJobsByCompany(company.id);
-      setJobs(jobsData);
-    } catch (error) {
-      console.error('Error loading company and jobs:', error);
-      toast.error('Failed to load jobs');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleDeleteJob = (job: Job) => {
-    setSelectedJob(job);
+  const handleDeleteJob = async (jobId: string) => {
+    const job = jobs.find(job => job.id === jobId);
+    setSelectedJob(job || null);
     setShowDeleteConfirm(true);
   };
 
@@ -54,14 +39,18 @@ const JobsManagement: React.FC = () => {
     if (!selectedJob) return;
     
     try {
+      setIsDeleting(true);
       await deleteJob(selectedJob.id);
+      // Invalidate jobs query to refetch
+      queryClient.invalidateQueries({ queryKey: queryKeys.jobs.byCompany(company?.id || '') });
       toast.success('Job deleted successfully');
-      setJobs(jobs.filter(job => job.id !== selectedJob.id));
       setShowDeleteConfirm(false);
       setSelectedJob(null);
     } catch (error) {
       console.error('Error deleting job:', error);
       toast.error('Failed to delete job');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -92,7 +81,6 @@ const JobsManagement: React.FC = () => {
     }
   };
 
-  // Show loading state
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -136,10 +124,10 @@ const JobsManagement: React.FC = () => {
         <div className="min-w-full divide-y divide-gray-200">
           {/* Table Header */}
           <div className="bg-gray-50 px-6 py-3 grid grid-cols-12 gap-4">
-            <div className="col-span-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Job Details</div>
-            <div className="col-span-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</div>
-            <div className="col-span-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Salary Range</div>
-            <div className="col-span-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Type</div>
+            <div className="col-span-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title And Company</div>
+            <div className="col-span-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</div>
+            <div className="col-span-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</div>
+            <div className="col-span-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Salary Range</div>
             <div className="col-span-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Applications</div>
             <div className="col-span-1 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</div>
           </div>
@@ -150,95 +138,43 @@ const JobsManagement: React.FC = () => {
               <div key={job.id} className="px-6 py-4 grid grid-cols-12 gap-4 hover:bg-gray-50">
                 <div className="col-span-4">
                   <div className="text-sm font-medium text-gray-900">{job.title}</div>
-                  <div className="text-sm text-gray-500">{job.location}</div>
+                  <div className="text-sm text-gray-500">{job.company?.name || 'Company Name Not Available'}</div>
                 </div>
-                <div className="col-span-2 flex items-center">
-                  <div className="flex items-center">
-                    <div className="h-8 w-8 flex-shrink-0 rounded bg-gray-100 flex items-center justify-center">
-                      {job.company?.logo_url ? (
-                        <img src={job.company.logo_url} alt={job.company.name} className="h-6 w-6 rounded" />
-                      ) : (
-                        <Briefcase className="h-4 w-4 text-gray-400" />
-                      )}
-                    </div>
-                    <div className="ml-2">
-                      <div className="text-sm text-gray-900">{job.company?.name}</div>
-                    </div>
-                  </div>
+                <div className="col-span-2">
+                  <div className="text-sm text-gray-900">{job.location}</div>
                 </div>
-                <div className="col-span-2 flex items-center">
+                <div className="col-span-2">
+                  <div className="text-sm text-gray-900">{job.type}</div>
+                </div>
+                <div className="col-span-1">
                   <div className="text-sm text-gray-900">
-                    {job.salary_min && job.salary_max ? (
-                      `€${job.salary_min.toLocaleString()} - €${job.salary_max.toLocaleString()}`
-                    ) : (
-                      'Salary not specified'
-                    )}
+                    {job.salary_min && job.salary_max
+                      ? `€${job.salary_min.toLocaleString()} - €${job.salary_max.toLocaleString()}`
+                      : 'Not specified'}
                   </div>
                 </div>
-                <div className="col-span-1 flex items-center justify-center">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getJobTypeColor(job.type)}`}>
-                    {job.type.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-                  </span>
+                <div className="col-span-2 flex justify-center items-center">
+                  <button
+                    onClick={() => navigate(`/dashboard/applications/manage?jobId=${job.id}`)}
+                    className="inline-flex items-center px-3 py-1 rounded-md text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    <Users className="h-4 w-4 mr-1" />
+                    <span>{job.applications_count || 0} Applications</span>
+                  </button>
                 </div>
-                <div className="col-span-2 flex items-center justify-center space-x-2">
-                  <span className="text-sm font-medium text-gray-900">0</span>
-                  <span className="text-sm text-gray-500">applicants</span>
-                </div>
-                <div className="col-span-1 flex items-center justify-end">
-                  <div className="relative">
-                    <button
-                      onClick={() => setShowDropdown(showDropdown === job.id ? null : job.id)}
-                      className="text-gray-400 hover:text-gray-600 focus:outline-none"
-                    >
-                      <MoreVertical className="h-5 w-5" />
-                    </button>
-                    {showDropdown === job.id && (
-                      <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
-                        <div className="py-1" role="menu">
-                          <button
-                            onClick={() => {
-                              setShowDropdown(null);
-                              handleViewJob(job);
-                            }}
-                            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                          >
-                            <Eye className="h-4 w-4 mr-3" />
-                            View Job Post
-                          </button>
-                          <button
-                            onClick={() => {
-                              setShowDropdown(null);
-                              handleEditJob(job);
-                            }}
-                            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                          >
-                            <Pencil className="h-4 w-4 mr-3" />
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => {
-                              setShowDropdown(null);
-                              handleViewApplications(job);
-                            }}
-                            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                          >
-                            <Users className="h-4 w-4 mr-3" />
-                            View Applications
-                          </button>
-                          <button
-                            onClick={() => {
-                              setShowDropdown(null);
-                              handleDeleteJob(job);
-                            }}
-                            className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left"
-                          >
-                            <Trash2 className="h-4 w-4 mr-3" />
-                            Delete
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                <div className="col-span-1 flex justify-end space-x-2">
+                  <button
+                    onClick={() => handleEditJob(job)}
+                    className="text-indigo-600 hover:text-indigo-900"
+                  >
+                    <PencilIcon className="h-5 w-5" />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteJob(job.id)}
+                    className="text-red-600 hover:text-red-900"
+                  >
+                    <TrashIcon className="h-5 w-5" />
+                  </button>
                 </div>
               </div>
             ))}

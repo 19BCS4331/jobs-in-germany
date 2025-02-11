@@ -104,6 +104,22 @@ const ProfileSettings = () => {
     linkedin_url: ''
   });
 
+  // Parse skills helper
+  const parseProfileSkills = (skills: any): string[] => {
+    if (!skills) return [];
+    if (Array.isArray(skills)) return skills;
+    if (typeof skills === 'string') {
+      try {
+        const parsed = JSON.parse(skills);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        // If not JSON, split by commas
+        return skills.split(',').map(s => s.trim()).filter(Boolean);
+      }
+    }
+    return [];
+  };
+
   // Load profile data
   React.useEffect(() => {
     if (user) {
@@ -114,6 +130,7 @@ const ProfileSettings = () => {
   // Initialize form state when profile loads or edit mode changes
   React.useEffect(() => {
     if (profile && isEditing) {
+      const skills = parseProfileSkills(profile.skills);
       setFormState({
         full_name: profile.full_name || '',
         email: profile.email || '',
@@ -122,7 +139,7 @@ const ProfileSettings = () => {
         preferred_role: profile.preferred_role || '',
         experience_years: profile.experience_years?.toString() || '',
         bio: profile.bio || '',
-        skills: Array.isArray(profile.skills) ? profile.skills.join(', ') : '',
+        skills: skills.join(', '),
         resume_url: profile.resume_url || '',
         portfolio_url: profile.portfolio_url || '',
         github_url: profile.github_url || '',
@@ -166,7 +183,11 @@ const ProfileSettings = () => {
         preferred_role: formState.preferred_role,
         experience_years: formState.experience_years ? parseInt(formState.experience_years) : null,
         bio: formState.bio,
-        skills: formState.skills.split(',').map(s => s.trim()).filter(Boolean),
+        // Convert skills string to array for API
+        skills: formState.skills
+          .split(',')
+          .map(s => s.trim())
+          .filter(s => s.length > 0),
         resume_url: formState.resume_url,
         portfolio_url: formState.portfolio_url,
         github_url: formState.github_url,
@@ -174,7 +195,10 @@ const ProfileSettings = () => {
       };
 
       await updateProfile(user.id, updatedProfile);
+      
+      // Update local profile state
       setProfile(updatedProfile as ProfileType);
+      
       toast.success('Profile updated successfully');
       setIsEditing(false);
     } catch (error) {
@@ -399,18 +423,21 @@ const ProfileSettings = () => {
                     </>
                   ) : (
                     <div className="flex flex-wrap gap-2">
-                      {Array.isArray(profile.skills) && profile.skills.length > 0 ? (
-                        profile.skills.map((skill, index) => (
-                          <span
-                            key={index}
-                            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800"
-                          >
-                            {skill}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text-sm text-gray-500">No skills listed</span>
-                      )}
+                      {(() => {
+                        const skills = parseProfileSkills(profile.skills);
+                        return skills.length > 0 ? (
+                          skills.map((skill, index) => (
+                            <span
+                              key={index}
+                              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800"
+                            >
+                              {skill.trim()}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-sm text-gray-500">No skills listed</span>
+                        );
+                      })()}
                     </div>
                   )}
                 </div>

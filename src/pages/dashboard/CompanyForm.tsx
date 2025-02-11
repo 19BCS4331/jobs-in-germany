@@ -51,7 +51,7 @@ const companyToFormData = (company: Partial<Company>): CompanyFormData => ({
 });
 
 // Convert form data back to company data for API
-const formDataToCompany = (formData: CompanyFormData): Omit<Company, 'id' | 'created_at'> => ({
+const formDataToCompany = (formData: CompanyFormData): Omit<Company, 'id' | 'created_at' | 'owner_id'> => ({
   name: formData.name,
   description: formData.description,
   website: formData.website || null,
@@ -70,7 +70,6 @@ const formDataToCompany = (formData: CompanyFormData): Omit<Company, 'id' | 'cre
   twitter_url: formData.twitter_url || null,
   facebook_url: formData.facebook_url || null,
   logo_url: formData.logo_url || null,
-  owner_id: '' // This will be set in handleSubmit
 });
 
 const CompanyForm: React.FC = () => {
@@ -196,21 +195,21 @@ const CompanyForm: React.FC = () => {
         logo_url = await uploadLogo() || '';
       }
 
-      const companyData = formDataToCompany({
-        ...formData,
-        logo_url
-      });
+      const companyData = {
+        ...formDataToCompany({
+          ...formData,
+          logo_url
+        }),
+        owner_id: user.id
+      };
 
       if (id) {
         // For updates, we can send partial data
         await updateCompany(id, companyData);
         toast.success('Company updated successfully!');
       } else {
-        // For creation, we need to include owner_id
-        await createCompany({
-          ...companyData,
-          owner_id: user.id
-        });
+        // For creation, we already have owner_id in companyData
+        await createCompany(companyData);
         toast.success('Company created successfully!');
       }
       navigate('/dashboard/companies/manage');

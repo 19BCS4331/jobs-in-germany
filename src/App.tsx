@@ -118,13 +118,13 @@ function App() {
               <Route path="/dashboard/settings" element={<ProtectedRoute allowedUserType="job_seeker"><ProfileSettings /></ProtectedRoute>} />
               
               {/* Employer Routes */}
-              <Route path="companies" element={<ProtectedRoute allowedUserType="employer"><CompaniesManagement /></ProtectedRoute>} />
-              <Route path="companies/new" element={<ProtectedRoute allowedUserType="employer"><CompanyForm /></ProtectedRoute>} />
-              <Route path="companies/:id/edit" element={<ProtectedRoute allowedUserType="employer"><CompanyForm /></ProtectedRoute>} />
-              <Route path="jobs" element={<ProtectedRoute allowedUserType="employer"><JobsManagement /></ProtectedRoute>} />
-              <Route path="jobs/new" element={<ProtectedRoute allowedUserType="employer"><JobPostingForm /></ProtectedRoute>} />
-              <Route path="jobs/:id/edit" element={<ProtectedRoute allowedUserType="employer"><JobPostingForm /></ProtectedRoute>} />
-              <Route path="job-applications" element={<ProtectedRoute allowedUserType="employer"><ApplicationsManagement /></ProtectedRoute>} />
+              <Route path="/dashboard/companies/manage" element={<ProtectedRoute allowedUserType="employer"><CompaniesManagement /></ProtectedRoute>} />
+              <Route path="/dashboard/companies/new" element={<ProtectedRoute allowedUserType="employer"><CompanyForm /></ProtectedRoute>} />
+              <Route path="/dashboard/companies/:id/edit" element={<ProtectedRoute allowedUserType="employer"><CompanyForm /></ProtectedRoute>} />
+              <Route path="/dashboard/jobs/manage" element={<ProtectedRoute allowedUserType="employer"><JobsManagement /></ProtectedRoute>} />
+              <Route path="/dashboard/jobs/new" element={<ProtectedRoute allowedUserType="employer"><JobPostingForm /></ProtectedRoute>} />
+              <Route path="/dashboard/jobs/:id/edit" element={<ProtectedRoute allowedUserType="employer"><JobPostingForm /></ProtectedRoute>} />
+              <Route path="/dashboard/applications/manage" element={<ProtectedRoute allowedUserType="employer"><ApplicationsManagement /></ProtectedRoute>} />
             </Route>
 
             {/* Catch all route */}
