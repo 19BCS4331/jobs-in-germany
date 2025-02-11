@@ -79,13 +79,13 @@ export default function SignUp() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <Link to="/" className="flex justify-center mb-6">
+        {/* <Link to="/" className="flex justify-center mb-6">
           <img
             className="h-12 w-auto"
             src="/src/assets/images/logo.png"
             alt="Jobs in Germany"
           />
-        </Link>
+        </Link> */}
         
         <h2 className="text-2xl sm:text-3xl font-extrabold text-center text-gray-900">
           Create your account
