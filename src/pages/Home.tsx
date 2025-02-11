@@ -106,7 +106,7 @@ const Home: React.FC = () => {
                   <div className="mt-3 sm:mt-0 sm:ml-3">
                     {user ? (
                       <Link
-                        to="/dashboard/profile"
+                        to="/dashboard/profile-settings"
                         className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 md:py-4 md:text-lg md:px-10 transition-all duration-200 hover:scale-105"
                       >
                         View Profile
