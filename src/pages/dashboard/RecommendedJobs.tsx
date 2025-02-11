@@ -59,6 +59,12 @@ function RecommendedJobs() {
       // Get all jobs
       const jobs = await getJobs();
 
+      if (!jobs || !profile?.skills || profile.skills.length === 0) {
+        setRecommendations([]);
+        setLoading(false);
+        return;
+      }
+
       // Calculate recommendation scores
       const scoredJobs = jobs.map(job => {
         const score = calculateJobScore(job, profile);
@@ -102,7 +108,7 @@ function RecommendedJobs() {
         ...(job.description.toLowerCase().split(/\W+/))
       ]);
 
-      const matchingSkills = profile.skills.filter(skill => 
+      const matchingSkills = profile.skills.filter((skill: string) => 
         jobSkills.has(skill.toLowerCase())
       );
 

@@ -61,11 +61,9 @@ function NewCompany() {
     values: string;
     funding_stage: string;
     tech_stack: string;
-    social_media: {
-      linkedin: string;
-      twitter: string;
-      facebook: string;
-    };
+    linkedin_url: string;
+    twitter_url: string;
+    facebook_url: string;
   }>({
     name: '',
     description: '',
@@ -82,11 +80,9 @@ function NewCompany() {
     values: '',
     funding_stage: '',
     tech_stack: '',
-    social_media: {
-      linkedin: '',
-      twitter: '',
-      facebook: ''
-    }
+    linkedin_url: '',
+    twitter_url: '',
+    facebook_url: ''
   });
 
   const validateForm = (): boolean => {
@@ -116,12 +112,11 @@ function NewCompany() {
     }
 
     // Social media validations
-    const { linkedin, twitter } = formData.social_media;
-    if (linkedin && !/^[a-zA-Z0-9-]+$/.test(linkedin)) {
-      newErrors['social_media.linkedin'] = 'Please enter a valid LinkedIn company name';
+    if (formData.linkedin_url && !/^[a-zA-Z0-9-]+$/.test(formData.linkedin_url)) {
+      newErrors.linkedin_url = 'Please enter a valid LinkedIn company name';
     }
-    if (twitter && !/^[a-zA-Z0-9_]+$/.test(twitter)) {
-      newErrors['social_media.twitter'] = 'Please enter a valid Twitter handle';
+    if (formData.twitter_url && !/^[a-zA-Z0-9_]+$/.test(formData.twitter_url)) {
+      newErrors.twitter_url = 'Please enter a valid Twitter handle';
     }
 
     // Founded year validation
@@ -136,19 +131,7 @@ function NewCompany() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => {
-      if (name.includes('.')) {
-        const [parent, child] = name.split('.');
-        return {
-          ...prev,
-          [parent]: {
-            ...(prev[parent as keyof typeof prev] as Record<string, string>),
-            [child]: value
-          }
-        };
-      }
-      return { ...prev, [name]: value };
-    });
+    setFormData(prev => ({ ...prev, [name]: value }));
     // Clear error when field is edited
     if (errors[name]) {
       setErrors(prev => {
@@ -464,51 +447,37 @@ function NewCompany() {
 
           <FormSection title="Social Media" icon={<FiGlobe size={20} />}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  LinkedIn
-                </label>
-                <div className="mt-1 flex rounded-md shadow-sm">
-                  <span className="inline-flex items-center rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 px-4 text-gray-500 sm:text-sm">
-                    linkedin.com/company/
-                  </span>
-                  <input
-                    type="text"
-                    name="social_media.linkedin"
-                    id="social_media.linkedin"
-                    value={formData.social_media.linkedin}
-                    onChange={handleChange}
-                    className={`block w-full flex-1 rounded-none rounded-r-lg border ${errors['social_media.linkedin'] ? 'border-red-500' : 'border-gray-300'} px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-blue-500 sm:text-sm transition-colors duration-200`}
-                    placeholder="company/your-company"
-                  />
-                </div>
-                {errors['social_media.linkedin'] && (
-                  <p className="mt-1 text-sm text-red-500">{errors['social_media.linkedin']}</p>
-                )}
-              </div>
+              <Input
+                label="LinkedIn URL"
+                type="url"
+                id="linkedin_url"
+                name="linkedin_url"
+                value={formData.linkedin_url}
+                onChange={handleChange}
+                placeholder="https://www.linkedin.com/company/your-company"
+                error={errors.linkedin_url}
+              />
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Twitter
-                </label>
-                <div className="mt-1 flex rounded-md shadow-sm">
-                  <span className="inline-flex items-center rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 px-4 text-gray-500 sm:text-sm">
-                    twitter.com/
-                  </span>
-                  <input
-                    type="text"
-                    name="social_media.twitter"
-                    id="social_media.twitter"
-                    value={formData.social_media.twitter}
-                    onChange={handleChange}
-                    className={`block w-full flex-1 rounded-none rounded-r-lg border ${errors['social_media.twitter'] ? 'border-red-500' : 'border-gray-300'} px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-blue-500 sm:text-sm transition-colors duration-200`}
-                    placeholder="your_company"
-                  />
-                </div>
-                {errors['social_media.twitter'] && (
-                  <p className="mt-1 text-sm text-red-500">{errors['social_media.twitter']}</p>
-                )}
-              </div>
+              <Input
+                label="Twitter URL"
+                type="url"
+                id="twitter_url"
+                name="twitter_url"
+                value={formData.twitter_url}
+                onChange={handleChange}
+                placeholder="https://twitter.com/your_company"
+                error={errors.twitter_url}
+              />
+
+              <Input
+                label="Facebook URL"
+                type="url"
+                id="facebook_url"
+                name="facebook_url"
+                value={formData.facebook_url}
+                onChange={handleChange}
+                placeholder="https://www.facebook.com/your-company"
+              />
             </div>
           </FormSection>
 

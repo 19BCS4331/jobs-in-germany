@@ -9,6 +9,7 @@ import Blog from './pages/Blog';
 import Profile from './pages/Profile';
 import ProfileSettings from './pages/dashboard/Profile';
 import NewCompany from './pages/company/New';
+import EditCompany from './pages/company/Edit';
 import DashboardLayout from './components/DashboardLayout';
 import EmployerDashboard from './pages/dashboard/EmployerDashboard';
 import JobSeekerDashboard from './pages/dashboard/JobSeekerDashboard';
@@ -20,6 +21,7 @@ import ApplicationsManagement from './pages/dashboard/ApplicationsManagement';
 import MyApplications from './pages/dashboard/MyApplications';
 import JobDetails from './pages/JobDetails';
 import SavedJobs from './pages/dashboard/SavedJobs';
+import Settings from './pages/dashboard/Settings';
 import { AuthProvider, useAuth } from './lib/AuthContext';
 import { SavedJobsProvider } from './contexts/SavedJobsContext';
 
@@ -100,6 +102,7 @@ function App() {
             {/* Protected routes */}
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/company/new" element={<ProtectedRoute allowedUserType="employer"><NewCompany /></ProtectedRoute>} />
+            
 
             {/* Dashboard Routes */}
             <Route
@@ -118,10 +121,13 @@ function App() {
               
               {/* Shared Routes */}
               <Route path="/dashboard/profile-settings" element={<ProtectedRoute><ProfileSettings /></ProtectedRoute>} />
+              <Route path="/dashboard/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+              
               
               {/* Employer Routes */}
               <Route path="/dashboard/companies/manage" element={<ProtectedRoute allowedUserType="employer"><CompaniesManagement /></ProtectedRoute>} />
               <Route path="/dashboard/companies/new" element={<ProtectedRoute allowedUserType="employer"><CompanyForm /></ProtectedRoute>} />
+              <Route path="/dashboard/companies/edit/:id" element={<ProtectedRoute allowedUserType="employer"><EditCompany /></ProtectedRoute>} />
               <Route path="/dashboard/companies/:id/edit" element={<ProtectedRoute allowedUserType="employer"><CompanyForm /></ProtectedRoute>} />
               <Route path="/dashboard/jobs/manage" element={<ProtectedRoute allowedUserType="employer"><JobsManagement /></ProtectedRoute>} />
               <Route path="/dashboard/jobs/new" element={<ProtectedRoute allowedUserType="employer"><JobPostingForm /></ProtectedRoute>} />

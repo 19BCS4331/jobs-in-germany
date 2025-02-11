@@ -1,18 +1,12 @@
 import React from 'react';
 
-interface Option {
-  value: string;
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;
-}
-
-interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
-  options: Option[];
-  label: string;
-  error?: boolean;
+  error?: string;
   required?: boolean;
 }
 
-const Select: React.FC<SelectProps> = ({ options, label, error, required, className = '', ...props }) => {
+const Input: React.FC<InputProps> = ({ label, error, required, className = '', ...props }) => {
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700">
@@ -20,13 +14,12 @@ const Select: React.FC<SelectProps> = ({ options, label, error, required, classN
         {required && <span className="text-red-500 ml-1">*</span>}
       </label>
       <div className="mt-1 relative rounded-md shadow-sm">
-        <select
+        <input
           className={`
             block w-full px-3 py-2
             border ${error ? 'border-red-300' : 'border-gray-300'}
             rounded-md
             shadow-sm
-            text-gray-900
             placeholder-gray-400
             focus:outline-none
             focus:ring-1
@@ -42,26 +35,15 @@ const Select: React.FC<SelectProps> = ({ options, label, error, required, classN
           aria-invalid={error ? 'true' : 'false'}
           aria-describedby={error ? `${props.id}-error` : undefined}
           {...props}
-        >
-          <option value="" className="text-gray-500">Select {label.toLowerCase()}</option>
-          {options.map((option) => (
-            <option 
-              key={option.value} 
-              value={option.value}
-              className="text-gray-900"
-            >
-              {option.label}
-            </option>
-          ))}
-        </select>
+        />
       </div>
       {error && (
         <p className="mt-2 text-sm text-red-600" id={`${props.id}-error`}>
-          Please select a {label.toLowerCase()}
+          {error}
         </p>
       )}
     </div>
   );
 };
 
-export default Select;
+export default Input;

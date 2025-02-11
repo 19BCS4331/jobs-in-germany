@@ -5,6 +5,7 @@ import { useAuth } from '../../lib/AuthContext';
 import { getJobApplications, updateApplicationStatus, getCompanyByOwner, getJobsByCompany, getApplicationsByJob, getApplicationsByCompany, Application, Job, queryKeys } from '../../lib/api';
 import { toast } from 'react-hot-toast';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import Select from '../../components/forms/Select';
 
 const statusColors = {
   pending: 'bg-yellow-100 text-yellow-800',
@@ -101,22 +102,19 @@ const ApplicationsManagement: React.FC = () => {
 
       {/* Job Filter */}
       <div className="bg-white p-4 shadow-sm rounded-lg">
-        <label htmlFor="job-filter" className="block text-sm font-medium text-gray-700">
-          Filter by Job
-        </label>
-        <select
+        <Select
+          label="Filter by Job"
           id="job-filter"
           value={jobId}
           onChange={(e) => handleJobChange(e.target.value)}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-        >
-          <option value="">All Jobs</option>
-          {jobs.map((job) => (
-            <option key={job.id} value={job.id}>
-              {job.title}
-            </option>
-          ))}
-        </select>
+          options={[
+            { value: '', label: 'All Jobs' },
+            ...jobs.map((job) => ({
+              value: job.id,
+              label: job.title
+            }))
+          ]}
+        />
       </div>
 
       {/* Applications List */}

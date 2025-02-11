@@ -2,14 +2,43 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 
-interface Profile {
+export interface Profile {
   id: string;
   email: string;
+  full_name: string;
+  first_name: string;
+  last_name: string;
   user_type: 'employer' | 'job_seeker';
-  full_name?: string;
-  headline?: string;
-  bio?: string;
-  location?: string;
+  phone?: string;
+  avatar_url?: string;
+  skills?: string[];
+  settings: {
+    notifications: {
+      emailNotifications: boolean;
+      marketingEmails: boolean;
+      // Employer specific
+      newApplications?: boolean;
+      applicationStatusChanges?: boolean;
+      // Job seeker specific
+      jobRecommendations?: boolean;
+      savedJobsUpdates?: boolean;
+    };
+    privacy: {
+      profileVisibility: 'public' | 'private';
+      showContactInfo: boolean;
+      // Job seeker specific
+      showResumeToEmployers?: boolean;
+      allowMessaging?: boolean;
+      // Employer specific
+      showCompanyDetails?: boolean;
+      allowJobSeekerApplications?: boolean;
+    };
+    preferences: {
+      language: string;
+    };
+  };
+  created_at: string;
+  updated_at: string;
 }
 
 type AuthContextType = {

@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import FormField from '../../components/forms/FormField';
-import Select from '../../components/forms/Select';
 import { useAuth } from '../../lib/AuthContext';
 import { Briefcase, Save, Loader2 } from 'lucide-react';
 import { getJob, createJob, updateJob, Job, getCompanyByOwner } from '../../lib/api';
 import { toast } from 'react-hot-toast';
+import Input from '../../components/forms/Input';
+import TextArea from '../../components/forms/TextArea';
+import Select from '../../components/forms/Select';
 
-// Use Pick to ensure our form data matches the Job type
 interface FormData {
   title: string;
   description: string;
@@ -46,24 +46,12 @@ const initialFormData: FormData = {
   company_id: '',
 };
 
-interface Option {
-  value: string;
-  label: string;
-}
-
-const jobTypes: Option[] = [
+const jobTypes = [
   { value: 'full-time', label: 'Full-time' },
   { value: 'part-time', label: 'Part-time' },
   { value: 'contract', label: 'Contract' },
   { value: 'internship', label: 'Internship' }
 ];
-
-interface SelectProps {
-  name: string;
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
-  options: readonly Option[] | Option[];
-}
 
 const JobPostingForm: React.FC = () => {
   const navigate = useNavigate();
@@ -224,87 +212,78 @@ const JobPostingForm: React.FC = () => {
         {jobId ? 'Edit Job Posting' : 'Create Job Posting'}
       </h1>
       <form onSubmit={handleSubmit} className="space-y-6">
-        <FormField label="Job Title" required error={errors.title}>
-          <input
-            type="text"
-            name="title"
-            value={formData.title}
-            onChange={handleChange}
-            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-            placeholder="e.g., Senior Frontend Developer"
-          />
-        </FormField>
+        <Input
+          label="Job Title"
+          name="title"
+          value={formData.title}
+          onChange={handleChange}
+          error={errors.title}
+          required
+          placeholder="e.g., Senior Frontend Developer"
+        />
 
-        <FormField label="Job Description" required error={errors.description}>
-          <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            rows={5}
-            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-            placeholder="Describe the responsibilities and requirements..."
-          />
-        </FormField>
+        <TextArea
+          label="Job Description"
+          name="description"
+          value={formData.description}
+          onChange={handleChange}
+          error={errors.description}
+          required
+          placeholder="Describe the responsibilities and requirements..."
+        />
 
-        <FormField label="Location" required error={errors.location}>
-          <input
-            type="text"
-            name="location"
-            value={formData.location}
-            onChange={handleChange}
-            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-            placeholder="e.g., Berlin, Remote"
-          />
-        </FormField>
+        <Input
+          label="Location"
+          name="location"
+          value={formData.location}
+          onChange={handleChange}
+          error={errors.location}
+          required
+          placeholder="e.g., Berlin, Remote"
+        />
 
-        <FormField label="Job Type" error={errors.type}>
-          <Select
-            name="type"
-            value={formData.type}
-            onChange={handleChange}
-            options={jobTypes}
-          />
-        </FormField>
+        <Select
+          label="Job Type"
+          name="type"
+          value={formData.type}
+          onChange={handleChange}
+          error={!!errors.type}
+          required
+          options={jobTypes}
+        />
 
         <div className="grid grid-cols-2 gap-4">
-          <FormField label="Minimum Salary" error={errors.salary_min}>
-            <input
-              type="number"
-              name="salary_min"
-              value={formData.salary_min || ''}
-              onChange={handleChange}
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              placeholder="e.g., 50000"
-            />
-          </FormField>
+          <Input
+            label="Minimum Salary"
+            type="number"
+            name="salary_min"
+            value={formData.salary_min || ''}
+            onChange={handleChange}
+            error={errors.salary_min}
+            placeholder="e.g., 50000"
+          />
 
-          <FormField label="Maximum Salary" error={errors.salary_max}>
-            <input
-              type="number"
-              name="salary_max"
-              value={formData.salary_max || ''}
-              onChange={handleChange}
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              placeholder="e.g., 70000"
-            />
-          </FormField>
+          <Input
+            label="Maximum Salary"
+            type="number"
+            name="salary_max"
+            value={formData.salary_max || ''}
+            onChange={handleChange}
+            error={errors.salary_max}
+            placeholder="e.g., 70000"
+          />
         </div>
 
-        <FormField 
-          label="Requirements" 
-          required 
+        <TextArea
+          label="Requirements"
+          name="requirements"
+          value={formData.requirements}
+          onChange={handleRequirementsChange}
           error={errors.requirements}
+          required
+          placeholder="Bachelor's degree in Computer Science or related field&#10;5+ years of experience in frontend development&#10;Strong proficiency in React and TypeScript"
           helpText="Enter each requirement on a new line"
-        >
-          <textarea
-            name="requirements"
-            value={formData.requirements}
-            onChange={handleRequirementsChange}
-            rows={5}
-            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-            placeholder="Bachelor's degree in Computer Science or related field&#10;5+ years of experience in frontend development&#10;Strong proficiency in React and TypeScript"
-          />
-        </FormField>
+        />
 
         <div className="flex justify-end space-x-3">
           <button

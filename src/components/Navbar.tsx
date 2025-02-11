@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { Menu, X, Briefcase, LogOut, User, ChevronDown, Loader2, Settings, Building2, Layout, FileText, BookOpen } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
@@ -13,6 +13,20 @@ const Navbar = () => {
   const [isSigningOut, setIsSigningOut] = useState(false);
   const { user,profile } = useAuth();
   const navigate = useNavigate();
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowProfileMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handleSignOut = async () => {
     try {
@@ -101,7 +115,7 @@ const Navbar = () => {
           {/* Secondary Navigation */}
           <div className="hidden md:flex md:items-center md:space-x-4">
             {user ? (
-              <div className="relative">
+              <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setShowProfileMenu(!showProfileMenu)}
                   className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-indigo-600 focus:outline-none transition-colors duration-200"
