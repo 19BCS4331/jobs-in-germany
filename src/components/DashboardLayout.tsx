@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Layout, Building2, FileText, Settings, BookOpen, BarChart3, Users } from 'lucide-react';
+import { Layout, Building2, FileText, Settings, BookOpen, BarChart3, Users,User } from 'lucide-react';
 import { useAuth } from '../lib/AuthContext';
 
 interface SidebarItem {
@@ -18,6 +18,7 @@ const DashboardLayout: React.FC = () => {
     { icon: Building2, label: 'My Companies', path: '/dashboard/companies/manage' },
     { icon: FileText, label: 'Job Postings', path: '/dashboard/jobs/manage' },
     { icon: Users, label: 'Applications', path: '/dashboard/applications/manage' },
+    { icon: User, label: 'Profile', path: '/dashboard/profile-settings' },
     { icon: Settings, label: 'Settings', path: '/dashboard/settings' },
   ];
 
@@ -25,6 +26,7 @@ const DashboardLayout: React.FC = () => {
     { icon: BarChart3, label: 'Overview', path: '/dashboard' },
     { icon: FileText, label: 'My Applications', path: '/dashboard/applications' },
     { icon: BookOpen, label: 'Saved Jobs', path: '/dashboard/saved-jobs' },
+    { icon: User, label: 'Profile', path: '/dashboard/profile-settings' },
     { icon: Settings, label: 'Settings', path: '/dashboard/settings' },
   ];
 
