@@ -23,6 +23,7 @@ import MyApplications from "./pages/dashboard/MyApplications";
 import JobDetails from "./pages/JobDetails";
 import SavedJobs from "./pages/dashboard/SavedJobs";
 import Settings from "./pages/dashboard/Settings";
+import Contact from "./pages/Contact";
 import { AuthProvider, useAuth } from "./lib/AuthContext";
 import { SavedJobsProvider } from "./contexts/SavedJobsContext";
 import AuthLayout from "./pages/auth/AuthLayout";
@@ -167,6 +168,15 @@ function App() {
                 element={
                   <>
                     <Blog />
+                    <Footer />
+                  </>
+                }
+              />
+              <Route
+                path="/contact"
+                element={
+                  <>
+                    <Contact />
                     <Footer />
                   </>
                 }

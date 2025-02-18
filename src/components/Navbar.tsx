@@ -71,6 +71,7 @@ const Navbar = () => {
     { path: '/companies', label: 'Companies' },
     { path: '/resources', label: 'Resources' },
     { path: '/blog', label: 'Blog' },
+    { path: '/contact', label: 'Contact Us' },
   ];
 
   const profileMenuItems = profile?.user_type === 'employer' ? [

@@ -8,7 +8,7 @@ const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-2">
             <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">
-              About Jobs in Germany
+              About The Germany Jobs
             </h3>
             <p className="mt-4 text-base text-gray-500">
               Connecting international talent with German employers. Find your dream job in Europe's largest economy.
@@ -39,6 +39,11 @@ const Footer: React.FC = () => {
                   Blog
                 </Link>
               </li>
+              <li>
+                <Link to="/contact" className="text-base text-gray-500 hover:text-gray-900">
+                  Contact
+                </Link>
+              </li>
             </ul>
           </div>
           <div>
@@ -61,7 +66,7 @@ const Footer: React.FC = () => {
         </div>
         <div className="mt-8 border-t border-gray-200 pt-8">
           <p className="text-base text-gray-400 text-center">
-            © {new Date().getFullYear()} Jobs in Germany. All rights reserved.
+            &copy; {new Date().getFullYear()} The Germany Jobs. All rights reserved.
           </p>
         </div>
       </div>
