@@ -31,6 +31,7 @@ import SignIn from "./pages/auth/SignIn";
 import SignUp from "./pages/auth/SignUp";
 import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
 import TermsOfService from "./pages/legal/TermsOfService";
+import ScrollToTop from "./components/ScrollToTop";
 
 // Protected route component
 const ProtectedRoute = ({
@@ -115,6 +116,7 @@ function App() {
       <AuthProvider>
         <SavedJobsProvider>
           <>
+            <ScrollToTop />
             {!isAuthPage && <Navbar />}
             <Routes>
               {/* Public routes */}

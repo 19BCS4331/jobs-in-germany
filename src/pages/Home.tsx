@@ -5,6 +5,7 @@ import { getJobs, getCompanies } from '../lib/api';
 import { Briefcase, Building2, MapPin, Euro, ChevronRight, Users, Globe2, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { Job as ApiJob, Company as ApiCompany } from '../lib/api';
+import AnimatedCounter from '../components/AnimatedCounter';
 
 type Job = ApiJob;
 type Company = ApiCompany;
@@ -238,11 +239,9 @@ const Home: React.FC = () => {
             ].map((stat, index) => (
               <motion.div 
                 key={index}
-                className="text-center"
                 variants={fadeInUp}
               >
-                <div className="text-5xl font-extrabold text-white">{stat.number}</div>
-                <div className="mt-2 text-xl font-medium text-indigo-100">{stat.label}</div>
+                <AnimatedCounter value={stat.number} label={stat.label} />
               </motion.div>
             ))}
           </motion.div>
