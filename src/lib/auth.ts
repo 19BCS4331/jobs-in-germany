@@ -1,8 +1,77 @@
 import { supabase } from './supabase';
+import { User } from '@supabase/supabase-js';
 
 export interface AuthError {
   message: string;
   status?: number;
+}
+
+export async function createUserProfile(user: User, userType?: 'job_seeker' | 'employer') {
+  try {
+    // Check if profile already exists
+    const { data: existingProfile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+
+    if (existingProfile) {
+      return { user: existingProfile };
+    }
+
+    // For Google Sign-In, extract name parts from user metadata
+    const { full_name = '', email = '' } = user.user_metadata || {};
+    const nameParts = full_name.split(' ');
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || '';
+
+    // Get the user type from localStorage if not provided
+    const finalUserType = userType || localStorage.getItem('selectedUserType') as 'job_seeker' | 'employer' || 'job_seeker';
+
+    // Create new profile
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .insert({
+        id: user.id,
+        email: email || user.email,
+        full_name: full_name,
+        first_name: firstName,
+        last_name: lastName,
+        user_type: finalUserType,
+        // avatar_url: user.user_metadata?.avatar_url,
+        settings: {
+          notifications: {
+            emailNotifications: true,
+            marketingEmails: false,
+          },
+          privacy: {
+            profileVisibility: 'public',
+            showContactInfo: false,
+          },
+          preferences: {
+            language: 'en',
+          },
+        },
+      })
+      .select()
+      .single();
+
+    if (profileError) {
+      console.error('Profile creation error:', profileError);
+      throw {
+        message: 'Failed to create user profile: ' + profileError.message,
+        status: profileError.code,
+      };
+    }
+
+    // Clear the stored user type after successful profile creation
+    localStorage.removeItem('selectedUserType');
+
+    return { user: profile };
+  } catch (err) {
+    console.error('Profile creation error:', err);
+    throw err;
+  }
 }
 
 export async function signUp(email: string, password: string, userType: 'job_seeker' | 'employer') {
@@ -27,22 +96,7 @@ export async function signUp(email: string, password: string, userType: 'job_see
       };
     }
 
-    // Create the profile directly
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .insert({
-        id: authData.user.id,
-        email: email,
-        user_type: userType,
-      });
-
-    if (profileError) {
-      console.error('Profile creation error:', profileError);
-      throw {
-        message: 'Failed to create user profile: ' + profileError.message,
-        status: profileError.code,
-      };
-    }
+    await createUserProfile(authData.user, userType);
 
     return authData;
   } catch (err) {

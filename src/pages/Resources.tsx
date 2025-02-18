@@ -60,7 +60,7 @@ function Resources() {
 
   return (
     <div className="min-h-screen bg-gray-50 pt-24">
-      <div className="container mx-auto px-6">
+      <div className="container mx-auto px-6 mb-5">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Resources</h1>
         
         <div className="space-y-12">

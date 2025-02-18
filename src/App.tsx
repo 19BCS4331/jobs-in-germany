@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
 import Home from "./pages/Home";
 import Jobs from "./pages/Jobs";
 import Companies from "./pages/Companies";
@@ -27,6 +28,8 @@ import { SavedJobsProvider } from "./contexts/SavedJobsContext";
 import AuthLayout from "./pages/auth/AuthLayout";
 import SignIn from "./pages/auth/SignIn";
 import SignUp from "./pages/auth/SignUp";
+import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
+import TermsOfService from "./pages/legal/TermsOfService";
 
 // Protected route component
 const ProtectedRoute = ({
@@ -107,132 +110,200 @@ function App() {
   const isAuthPage = ['/signin', '/signup'].includes(location.pathname);
 
   return (
-    <AuthProvider>
-      <SavedJobsProvider>
-        <>
-          {!isAuthPage && <Navbar />}
-          <Routes>
-            {/* Public routes */}
-            <Route path="/" element={<Home />} />
-            <Route path="/jobs" element={<Jobs />} />
-            <Route path="/jobs/:id" element={<JobDetails />} />
-            <Route path="/companies" element={<Companies />} />
-            <Route path="/resources" element={<Resources />} />
-            <Route path="/blog" element={<Blog />} />
-
-            {/* Auth routes */}
-            <Route element={<AuthLayout />}>
-              <Route path="/signin" element={<SignIn />} />
-              <Route path="/signup" element={<SignUp />} />
-            </Route>
-
-            {/* Protected routes */}
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <DashboardLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<DashboardIndex />} />
-              <Route path="profile-settings" element={<ProfileSettings />} />
-              <Route path="settings" element={<Settings />} />
-
-              {/* Job seeker routes */}
+    <div className="flex flex-col min-h-screen">
+      <AuthProvider>
+        <SavedJobsProvider>
+          <>
+            {!isAuthPage && <Navbar />}
+            <Routes>
+              {/* Public routes */}
               <Route
-                path="saved-jobs"
+                path="/"
                 element={
-                  <ProtectedRoute allowedUserType="job_seeker">
-                    <SavedJobs />
-                  </ProtectedRoute>
+                  <>
+                    <Home />
+                    <Footer />
+                  </>
                 }
               />
               <Route
-                path="applications"
+                path="/jobs"
                 element={
-                  <ProtectedRoute allowedUserType="job_seeker">
-                    <MyApplications />
-                  </ProtectedRoute>
-                }
-              />
-
-              {/* Employer routes */}
-              <Route
-                path="companies/manage"
-                element={
-                  <ProtectedRoute allowedUserType="employer">
-                    <CompaniesManagement />
-                  </ProtectedRoute>
+                  <>
+                    <Jobs />
+                    <Footer />
+                  </>
                 }
               />
               <Route
-                path="companies/new"
+                path="/jobs/:id"
                 element={
-                  <ProtectedRoute allowedUserType="employer">
-                    <CompanyForm />
-                  </ProtectedRoute>
+                  <>
+                    <JobDetails />
+                    <Footer />
+                  </>
                 }
               />
               <Route
-                path="companies/edit/:id"
+                path="/companies"
                 element={
-                  <ProtectedRoute allowedUserType="employer">
-                    <EditCompany />
-                  </ProtectedRoute>
+                  <>
+                    <Companies />
+                    <Footer />
+                  </>
                 }
               />
               <Route
-                path="jobs/manage"
+                path="/resources"
                 element={
-                  <ProtectedRoute allowedUserType="employer">
-                    <JobsManagement />
-                  </ProtectedRoute>
+                  <>
+                    <Resources />
+                    <Footer />
+                  </>
                 }
               />
               <Route
-                path="jobs/new"
+                path="/blog"
                 element={
-                  <ProtectedRoute allowedUserType="employer">
-                    <JobPostingForm />
-                  </ProtectedRoute>
+                  <>
+                    <Blog />
+                    <Footer />
+                  </>
+                }
+              />
+              <Route
+                path="/privacy-policy"
+                element={
+                  <>
+                    <PrivacyPolicy />
+                    <Footer />
+                  </>
+                }
+              />
+              <Route
+                path="/terms-of-service"
+                element={
+                  <>
+                    <TermsOfService />
+                    <Footer />
+                  </>
                 }
               />
 
+              {/* Auth routes */}
+              <Route element={<AuthLayout />}>
+                <Route path="/signin" element={<SignIn />} />
+                <Route path="/signup" element={<SignUp />} />
+              </Route>
+
+              {/* Protected routes */}
               <Route
-                path="jobs/:id/edit"
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <DashboardLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<DashboardIndex />} />
+                <Route path="profile-settings" element={<ProfileSettings />} />
+                <Route path="settings" element={<Settings />} />
+
+                {/* Job seeker routes */}
+                <Route
+                  path="saved-jobs"
+                  element={
+                    <ProtectedRoute allowedUserType="job_seeker">
+                      <SavedJobs />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="applications"
+                  element={
+                    <ProtectedRoute allowedUserType="job_seeker">
+                      <MyApplications />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Employer routes */}
+                <Route
+                  path="companies/manage"
+                  element={
+                    <ProtectedRoute allowedUserType="employer">
+                      <CompaniesManagement />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="companies/new"
+                  element={
+                    <ProtectedRoute allowedUserType="employer">
+                      <CompanyForm />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="companies/edit/:id"
+                  element={
+                    <ProtectedRoute allowedUserType="employer">
+                      <EditCompany />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="jobs/manage"
+                  element={
+                    <ProtectedRoute allowedUserType="employer">
+                      <JobsManagement />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="jobs/new"
+                  element={
+                    <ProtectedRoute allowedUserType="employer">
+                      <JobPostingForm />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="jobs/:id/edit"
+                  element={
+                    <ProtectedRoute allowedUserType="employer">
+                      <JobPostingForm />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="applications/manage"
+                  element={
+                    <ProtectedRoute allowedUserType="employer">
+                      <ApplicationsManagement />
+                    </ProtectedRoute>
+                  }
+                />
+              </Route>
+
+              {/* Company management routes */}
+              <Route
+                path="/company/new"
                 element={
                   <ProtectedRoute allowedUserType="employer">
-                    <JobPostingForm />
+                    <NewCompany />
                   </ProtectedRoute>
                 }
               />
-              <Route
-                path="applications/manage"
-                element={
-                  <ProtectedRoute allowedUserType="employer">
-                    <ApplicationsManagement />
-                  </ProtectedRoute>
-                }
-              />
-            </Route>
 
-            {/* Company management routes */}
-            <Route
-              path="/company/new"
-              element={
-                <ProtectedRoute allowedUserType="employer">
-                  <NewCompany />
-                </ProtectedRoute>
-              }
-            />
-
-            {/* Catch all */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </>
-      </SavedJobsProvider>
-    </AuthProvider>
+              {/* Catch all */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </>
+        </SavedJobsProvider>
+      </AuthProvider>
+    </div>
   );
 }
 

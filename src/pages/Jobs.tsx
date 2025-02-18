@@ -214,8 +214,8 @@ function Jobs() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-24">
-      <div className="container mx-auto px-6">
+    <div className="min-h-screen bg-gray-50 pt-24 ">
+      <div className="container mx-auto px-6 mb-5">
         {/* Search Section */}
         <div className="bg-white p-6 rounded-xl shadow-sm mb-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

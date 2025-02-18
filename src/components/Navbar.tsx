@@ -4,6 +4,7 @@ import { Menu, X, Briefcase, LogOut, User, ChevronDown, Loader2, Settings, Build
 import toast from 'react-hot-toast';
 import { signOut } from '../lib/auth';
 import { useAuth } from '../lib/AuthContext';
+import logo from '../assets/images/TGJ_NEWEST_NO_BG.png';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -86,8 +87,8 @@ const Navbar = () => {
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
               <NavLink to="/" className="flex items-center space-x-2">
-                <Briefcase className="h-8 w-8 text-indigo-600" />
-                <span className="text-xl font-bold text-gray-900">JobHub</span>
+              <img src={logo} alt="The Germany Jobs Logo" className="h-22 w-24" />
+                {/* <span className="text-xl font-bold text-gray-900">JobHub</span> */}
               </NavLink>
             </div>
             

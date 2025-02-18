@@ -113,7 +113,7 @@ const Home: React.FC = () => {
                       </Link>
                     ) : (
                       <Link
-                        to="/signin"
+                        to="/signup"
                         className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 md:py-4 md:text-lg md:px-10 transition-all duration-200 hover:scale-105"
                       >
                         Get Started
@@ -567,7 +567,7 @@ const Home: React.FC = () => {
           <div className="mt-8 flex lg:mt-0 lg:flex-shrink-0">
             <div className="inline-flex rounded-md shadow">
               <Link
-                to={user ? "/dashboard" : "/signin"}
+                to={user ? "/dashboard" : "/signup"}
                 className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-indigo-600 bg-white hover:bg-indigo-50"
               >
                 {user ? "Go to Dashboard" : "Get Started"}
