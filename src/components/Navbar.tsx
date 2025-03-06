@@ -68,7 +68,7 @@ const Navbar = () => {
   const navItems = [
     { path: '/', label: 'Home' },
     { path: '/jobs', label: 'Find Jobs' },
-    { path: '/companies', label: 'Companies' },
+    // { path: '/companies', label: 'Companies' },
     { path: '/resources', label: 'Resources' },
     { path: '/blog', label: 'Blog' },
     { path: '/contact', label: 'Contact Us' },

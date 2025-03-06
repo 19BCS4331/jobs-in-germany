@@ -77,7 +77,7 @@ const PrivacyPolicy: React.FC = () => {
               <p className="text-gray-700 mb-4">
                 If you have questions about this Privacy Policy, please contact us at:
                 <br />
-                Email: privacy@jobsingermany.com
+                Email: info@thegermanyjobs.com
               </p>
             </section>
           </div>
