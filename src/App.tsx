@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Home from "./pages/Home";
-import Resources from "./pages/Resources";
-import Blog from "./pages/Blog";
 import Contact from "./pages/Contact";
 import HowItWorks from "./pages/HowItWorks";
 import { AuthProvider, useAuth } from "./lib/AuthContext";
@@ -13,35 +12,38 @@ import SignIn from "./pages/auth/SignIn";
 import SignUp from "./pages/auth/SignUp";
 import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
 import TermsOfService from "./pages/legal/TermsOfService";
+import ResumeUpload from "./pages/dashboard/ResumeUpload";
+import Payment from "./pages/dashboard/Payment";
 import ScrollToTop from "./components/ScrollToTop";
 
 // Protected route component
-const ProtectedRoute = ({
-  children,
-  allowedUserType,
-}: {
-  children: React.ReactNode;
-  allowedUserType?: "employer" | "job_seeker";
-}) => {
-  const { user, profile, loading } = useAuth();
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading } = useAuth();
   const [localLoading, setLocalLoading] = useState(true);
 
   useEffect(() => {
-    // Wait a bit for the profile to be loaded after signup
-    if (user && !profile) {
+    if (loading) {
       const timer = setTimeout(() => {
         setLocalLoading(false);
-      }, 1000); // Give it a second to load the profile
+      }, 1000);
       return () => clearTimeout(timer);
     } else {
       setLocalLoading(false);
     }
-  }, [user, profile]);
+  }, [loading]);
 
   if (loading || localLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <motion.div 
+          className="w-8 h-8 border-2 border-primary-300 border-t-primary-600 rounded-full"
+          animate={{ rotate: 360 }}
+          transition={{
+            duration: 1.5,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+        />
       </div>
     );
   }
@@ -50,16 +52,16 @@ const ProtectedRoute = ({
     return <Navigate to="/signin" replace />;
   }
 
-  // Only check user type if profile is loaded and we have an allowed type
-  if (profile && allowedUserType && profile.user_type !== allowedUserType) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        You don't have permission to access this page.
-      </div>
-    );
-  }
-
-  return <>{children}</>;
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -3 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -3 }}
+      transition={{ type: "spring", stiffness: 200, damping: 25 }}
+    >
+      {children}
+    </motion.div>
+  );
 };
 
 function App() {
@@ -72,81 +74,110 @@ function App() {
         <>
           <ScrollToTop />
           {!isAuthPage && <Navbar />}
-          <Routes>
-            {/* Public routes */}
-            <Route
-              path="/"
-              element={
-                <>
-                  <Home />
-                  <Footer />
-                </>
-              }
-            />
-            <Route
-              path="/how-it-works"
-              element={
-                <>
-                  <HowItWorks />
-                  <Footer />
-                </>
-              }
-            />
-            <Route
-              path="/resources"
-              element={
-                <>
-                  <Resources />
-                  <Footer />
-                </>
-              }
-            />
-            <Route
-              path="/blog"
-              element={
-                <>
-                  <Blog />
-                  <Footer />
-                </>
-              }
-            />
-            <Route
-              path="/contact"
-              element={
-                <>
-                  <Contact />
-                  <Footer />
-                </>
-              }
-            />
-            <Route
-              path="/privacy-policy"
-              element={
-                <>
-                  <PrivacyPolicy />
-                  <Footer />
-                </>
-              }
-            />
-            <Route
-              path="/terms-of-service"
-              element={
-                <>
-                  <TermsOfService />
-                  <Footer />
-                </>
-              }
-            />
+          <AnimatePresence mode="wait">
+            <Routes location={location} key={location.pathname}>
+              {/* Public routes */}
+              <Route
+                path="/"
+                element={
+                  <motion.div
+                    initial={{ opacity: 0, y: -3 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -3 }}
+                    transition={{ type: "spring", stiffness: 200, damping: 25 }}
+                  >
+                    <Home />
+                    <Footer />
+                  </motion.div>
+                }
+              />
+              <Route
+                path="/how-it-works"
+                element={
+                  <motion.div
+                    initial={{ opacity: 0, y: -3 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -3 }}
+                    transition={{ type: "spring", stiffness: 200, damping: 25 }}
+                  >
+                    <HowItWorks />
+                    <Footer />
+                  </motion.div>
+                }
+              />
+              <Route
+                path="/contact"
+                element={
+                  <motion.div
+                    initial={{ opacity: 0, y: -3 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -3 }}
+                    transition={{ type: "spring", stiffness: 200, damping: 25 }}
+                  >
+                    <Contact />
+                    <Footer />
+                  </motion.div>
+                }
+              />
+              <Route
+                path="/privacy-policy"
+                element={
+                  <motion.div
+                    initial={{ opacity: 0, y: -3 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -3 }}
+                    transition={{ type: "spring", stiffness: 200, damping: 25 }}
+                  >
+                    <PrivacyPolicy />
+                    <Footer />
+                  </motion.div>
+                }
+              />
+              <Route
+                path="/terms-of-service"
+                element={
+                  <motion.div
+                    initial={{ opacity: 0, y: -3 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -3 }}
+                    transition={{ type: "spring", stiffness: 200, damping: 25 }}
+                  >
+                    <TermsOfService />
+                    <Footer />
+                  </motion.div>
+                }
+              />
 
-            {/* Auth routes */}
-            <Route element={<AuthLayout />}>
-              <Route path="/signin" element={<SignIn />} />
-              <Route path="/signup" element={<SignUp />} />
-            </Route>
+              {/* Auth routes */}
+              <Route element={<AuthLayout />}>
+                <Route path="/signin" element={<SignIn />} />
+                <Route path="/signup" element={<SignUp />} />
+              </Route>
 
-            {/* Catch all */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+              {/* Protected routes */}
+              <Route
+                path="/dashboard/resume"
+                element={
+                  <ProtectedRoute>
+                    <ResumeUpload />
+                    <Footer />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/payment"
+                element={
+                  <ProtectedRoute>
+                    <Payment />
+                    <Footer />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Catch all */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </AnimatePresence>
         </>
       </AuthProvider>
     </div>
