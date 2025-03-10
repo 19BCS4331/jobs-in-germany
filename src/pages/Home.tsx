@@ -1505,7 +1505,7 @@ const Home: React.FC = () => {
               <span className="text-gray-900">info@thegermanyjobs.com</span>
             </motion.a>
             <motion.a
-              href="tel:+1234567890"
+              href="tel:+919819761300"
               className="flex items-center justify-center p-8 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
               variants={cardHoverAnimation}
               initial="initial"

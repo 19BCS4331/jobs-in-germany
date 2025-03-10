@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Layout, Building2, FileText, Settings, BookOpen, BarChart3, Users, User, Menu, X } from 'lucide-react';
+import { Layout, Building2, FileText, Settings, BookOpen, BarChart3, Users, User, Menu, X, CreditCard } from 'lucide-react';
 import { useAuth } from '../lib/AuthContext';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface SidebarItem {
   icon: React.ElementType;
@@ -25,10 +26,11 @@ const DashboardLayout: React.FC = () => {
 
   const jobSeekerSidebarItems: SidebarItem[] = [
     { icon: BarChart3, label: 'Overview', path: '/dashboard' },
-    { icon: FileText, label: 'My Applications', path: '/dashboard/applications' },
-    { icon: BookOpen, label: 'Saved Jobs', path: '/dashboard/saved-jobs' },
-    { icon: User, label: 'Profile', path: '/dashboard/profile-settings' },
-    { icon: Settings, label: 'Settings', path: '/dashboard/settings' },
+    // { icon: FileText, label: 'My Applications', path: '/dashboard/applications' },
+    // { icon: BookOpen, label: 'Saved Jobs', path: '/dashboard/saved-jobs' },
+    { icon: User, label: 'My Profile', path: '/dashboard/my-profile' },
+    { icon: CreditCard, label: 'Payments', path: '/dashboard/payments' },
+    // { icon: Settings, label: 'Settings', path: '/dashboard/settings' },
   ];
 
   const sidebarItems = profile?.user_type === 'employer' 
@@ -40,37 +42,50 @@ const DashboardLayout: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 mt-16">
-      <div className="flex">
+    <div className="min-h-screen bg-gray-50 pt-16">
+      <div className="flex h-[calc(100vh-4rem)]">
         {/* Sidebar Backdrop */}
-        {isSidebarOpen && (
-          <div
-            className="fixed inset-0 bg-gray-600 bg-opacity-50 transition-opacity lg:hidden z-30"
-            onClick={toggleSidebar}
-            aria-hidden="true"
-          />
-        )}
+        <AnimatePresence>
+          {isSidebarOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 bg-gray-600 bg-opacity-50 lg:hidden z-40"
+              onClick={toggleSidebar}
+              aria-hidden="true"
+            />
+          )}
+        </AnimatePresence>
 
-        {/* Mobile Menu Button - Moved inside main content */}
-        <div className="lg:hidden fixed top-16 left-0 right-0 h-14 bg-white border-b border-gray-200 flex items-center px-4 z-30">
-          <button
+        {/* Mobile Menu Button */}
+        <div className="lg:hidden fixed top-16 left-0 right-0 h-14 bg-white border-b border-gray-200 flex items-center px-4 z-40">
+          <motion.button
             onClick={toggleSidebar}
             className="p-2 rounded-md text-gray-600 hover:bg-gray-100 focus:outline-none"
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.99 }}
+            transition={{ type: "spring", stiffness: 200, damping: 25 }}
             aria-label="Toggle menu"
           >
             <Menu className="h-6 w-6" />
-          </button>
+          </motion.button>
         </div>
 
         {/* Sidebar */}
-        <aside
+        <motion.aside
           className={`
-            fixed top-16 bottom-0 left-0 w-64 bg-white shadow-lg 
-            lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)]
-            transform transition-transform duration-300 ease-in-out
-            ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-            z-30
+            fixed lg:relative top-16 bottom-0 left-0 w-64 bg-white shadow-lg 
+            lg:block lg:top-0 lg:h-[calc(100vh-4rem)]
+            transform z-40
           `}
+          initial={false}
+          animate={{ 
+            x: isSidebarOpen || window.innerWidth >= 1024 ? 0 : -256,
+            opacity: 1 
+          }}
+          transition={{ type: "spring", stiffness: 200, damping: 25 }}
         >
           <div className="h-full overflow-y-auto">
             <div className="flex items-center justify-between p-4 lg:p-6 border-b border-gray-200">
@@ -80,12 +95,15 @@ const DashboardLayout: React.FC = () => {
                   {profile?.user_type === 'employer' ? 'Employer Portal' : 'Job Seeker Portal'}
                 </p>
               </div>
-              <button
+              <motion.button
                 onClick={toggleSidebar}
                 className="lg:hidden p-2 rounded-md text-gray-500 hover:bg-gray-100 focus:outline-none"
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                transition={{ type: "spring", stiffness: 200, damping: 25 }}
               >
                 <X className="h-5 w-5" />
-              </button>
+              </motion.button>
             </div>
             
             <nav className="mt-2">
@@ -102,19 +120,30 @@ const DashboardLayout: React.FC = () => {
                     }`
                   }
                 >
-                  <item.icon className="h-5 w-5" />
-                  <span>{item.label}</span>
+                  <motion.div
+                    whileHover={{ scale: 1.01, y: -1 }}
+                    transition={{ type: "spring", stiffness: 200, damping: 25 }}
+                    className="flex items-center space-x-3"
+                  >
+                    <item.icon className="h-5 w-5" />
+                    <span>{item.label}</span>
+                  </motion.div>
                 </NavLink>
               ))}
             </nav>
           </div>
-        </aside>
+        </motion.aside>
 
         {/* Main Content */}
-        <main className="flex-1 min-w-0 lg:p-8">
-          <div className="mt-14 lg:mt-0 p-4"> {/* Added margin for mobile menu */}
+        <main className="flex-1 min-w-0 overflow-y-auto">
+          <motion.div 
+            className="mt-14 lg:mt-0 p-4 lg:p-8"
+            initial={{ opacity: 0, y: -3 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: "spring", stiffness: 200, damping: 25 }}
+          >
             <Outlet />
-          </div>
+          </motion.div>
         </main>
       </div>
     </div>

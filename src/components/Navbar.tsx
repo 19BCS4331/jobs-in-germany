@@ -1,11 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { NavLink, useNavigate, Link, useLocation } from 'react-router-dom';
-import { Menu, X, LogOut, User, ChevronDown, Loader2, FileText, CreditCard } from 'lucide-react';
+import { Menu, X, Briefcase, LogOut, User, ChevronDown, Loader2, Settings, Building2, Layout, FileText, BookOpen } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { signOut } from '../lib/auth';
 import { useAuth } from '../lib/AuthContext';
 import logo from '../assets/images/TGJ_NEWEST_NO_BG.png';
-import { motion } from 'framer-motion';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -20,13 +19,14 @@ const Navbar = () => {
 
   useEffect(() => {
     const handleScroll = () => {
-      const scrollThreshold = window.innerHeight - 64;
+      // Check if we've scrolled past the hero section (100vh - navbar height)
+      const scrollThreshold = window.innerHeight - 64; // 64px is navbar height
       setIsScrolled(window.scrollY > scrollThreshold);
     };
 
     if (isLandingPage) {
       window.addEventListener('scroll', handleScroll);
-      handleScroll();
+      handleScroll(); // Check initial scroll position
     } else {
       setIsScrolled(true);
     }
@@ -90,12 +90,15 @@ const Navbar = () => {
   const navItems = [
     { path: '/', label: 'Home' },
     { path: '/how-it-works', label: 'How It Works' },
+    // { path: '/resources', label: 'Resources' },
+    // { path: '/blog', label: 'Blog' },
     { path: '/contact', label: 'Contact Us' },
   ];
 
-  const profileMenuItems = [
-    { icon: FileText, label: 'Resume Upload', path: '/dashboard/resume' },
-    { icon: CreditCard, label: 'Premium Access', path: '/dashboard/payment' },
+  const profileMenuItems = profile?.user_type === 'employer' ? [
+    { icon: Layout, label: 'Dashboard', path: '/dashboard' },
+  ] : [
+    { icon: Layout, label: 'Dashboard', path: '/dashboard' },
   ];
 
   return (
@@ -142,15 +145,13 @@ const Navbar = () => {
           <div className="hidden md:flex md:items-center md:space-x-4">
             {user ? (
               <div className="relative" ref={dropdownRef}>
-                <motion.button
+                <button
                   onClick={() => setShowProfileMenu(!showProfileMenu)}
                   className={`flex items-center space-x-2 px-4 py-2 text-sm font-medium transition-colors duration-200 ${
                     isLandingPage && !isScrolled
                       ? 'text-white hover:text-gray-200'
                       : 'text-gray-700 hover:text-indigo-600'
                   }`}
-                  whileHover={{ scale: 1.01 }}
-                  transition={{ type: "spring", stiffness: 200, damping: 25 }}
                 >
                   <div className={`h-8 w-8 rounded-full flex items-center justify-center ${
                     isLandingPage && !isScrolled ? 'bg-white/20' : 'bg-indigo-100'
@@ -159,42 +160,33 @@ const Navbar = () => {
                       isLandingPage && !isScrolled ? 'text-white' : 'text-indigo-600'
                     }`} />
                   </div>
-                  <span>{profile?.full_name || user.email?.split('@')[0]}</span>
+                  <span>{profile && profile.full_name!=='' && profile.full_name!==null ? profile.full_name : user.email?.split('@')[0]}</span>
                   <ChevronDown className="h-4 w-4" />
-                </motion.button>
+                </button>
 
                 {/* Profile Dropdown */}
                 {showProfileMenu && (
-                  <motion.div 
-                    className="absolute right-0 mt-2 w-56 rounded-lg shadow-lg bg-white ring-1 ring-black/5 divide-y divide-gray-100"
-                    initial={{ opacity: 0, y: -3 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ type: "spring", stiffness: 200, damping: 25 }}
-                  >
+                  <div className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100">
                     <div className="py-1">
                       {profileMenuItems.map((item) => (
-                        <motion.button
+                        <button
                           key={item.path}
                           onClick={() => {
                             navigate(item.path);
                             setShowProfileMenu(false);
                           }}
-                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-600 flex items-center space-x-2 transition-colors duration-200"
-                          whileHover={{ x: 2 }}
-                          transition={{ type: "spring", stiffness: 200, damping: 25 }}
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 flex items-center space-x-2 transition-colors duration-200"
                         >
                           <item.icon className="h-4 w-4" />
                           <span>{item.label}</span>
-                        </motion.button>
+                        </button>
                       ))}
                     </div>
                     <div className="py-1">
-                      <motion.button
+                      <button
                         onClick={handleSignOut}
                         disabled={isSigningOut}
-                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-600 flex items-center space-x-2 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                        whileHover={!isSigningOut ? { x: 2 } : {}}
-                        transition={{ type: "spring", stiffness: 200, damping: 25 }}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 flex items-center space-x-2 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {isSigningOut ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
@@ -202,140 +194,159 @@ const Navbar = () => {
                           <LogOut className="h-4 w-4" />
                         )}
                         <span>{isSigningOut ? 'Signing out...' : 'Sign out'}</span>
-                      </motion.button>
+                      </button>
                     </div>
-                  </motion.div>
+                  </div>
                 )}
               </div>
             ) : (
               <div className="flex items-center space-x-4">
-                <motion.button
-                  onClick={() => navigate('/signin')}
-                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
+                <Link
+                  to="/signin"
+                  className={`text-sm font-medium transition-colors duration-200 ${
                     isLandingPage && !isScrolled
                       ? 'text-white hover:text-gray-200'
                       : 'text-gray-700 hover:text-indigo-600'
                   }`}
-                  whileHover={{ scale: 1.01 }}
-                  transition={{ type: "spring", stiffness: 200, damping: 25 }}
                 >
                   Sign in
-                </motion.button>
-                <motion.button
-                  onClick={() => navigate('/signup')}
-                  className={`px-4 py-2 text-sm font-medium rounded-lg ${
+                </Link>
+                <Link
+                  to="/signup"
+                  className={`inline-flex items-center px-4 py-2 border text-sm font-medium rounded-md shadow-sm transition-colors duration-200 ${
                     isLandingPage && !isScrolled
                       ? 'border-white text-white hover:bg-white hover:text-indigo-600'
                       : 'border-transparent text-white bg-indigo-600 hover:bg-indigo-700'
                   }`}
-                  whileHover={{ scale: 1.01 }}
-                  transition={{ type: "spring", stiffness: 200, damping: 25 }}
                 >
-                  Sign up
-                </motion.button>
+                  Get Started
+                </Link>
               </div>
             )}
           </div>
 
           {/* Mobile menu button */}
-          <div className="md:hidden flex items-center">
-            <motion.button
+          <div className="flex items-center md:hidden">
+            <button
               onClick={toggleMenu}
-              className={`inline-flex items-center justify-center p-2 rounded-md ${
+              className={`inline-flex items-center justify-center p-2 rounded-md focus:outline-none transition-colors duration-200 ${
                 isLandingPage && !isScrolled
-                  ? 'text-white hover:bg-white/10'
-                  : 'text-gray-700 hover:bg-gray-100'
+                  ? 'text-white hover:text-gray-200 hover:bg-white/10'
+                  : 'text-gray-700 hover:text-indigo-600 hover:bg-indigo-50'
               }`}
-              whileHover={{ scale: 1.01 }}
-              transition={{ type: "spring", stiffness: 200, damping: 25 }}
             >
               {isOpen ? (
-                <X className="h-6 w-6" />
+                <X className="block h-6 w-6" />
               ) : (
-                <Menu className="h-6 w-6" />
+                <Menu className="block h-6 w-6" />
               )}
-            </motion.button>
+            </button>
           </div>
         </div>
       </div>
 
       {/* Mobile menu */}
       {isOpen && (
-        <motion.div 
-          className="md:hidden bg-white shadow-lg"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ type: "spring", stiffness: 200, damping: 25 }}
-        >
+        <div className="md:hidden">
           <div className="px-2 pt-2 pb-3 space-y-1">
             {navItems.map((item) => (
               <NavLink
                 key={item.path}
                 to={item.path}
-                onClick={() => setIsOpen(false)}
+                onClick={toggleMenu}
                 className={({ isActive }) =>
                   `block px-3 py-2 rounded-md text-base font-medium ${
                     isActive
-                      ? 'text-primary-600 bg-primary-50'
-                      : 'text-gray-700 hover:text-primary-600 hover:bg-primary-50'
-                  }`
+                      ? isLandingPage && !isScrolled ? 'text-white' : 'text-indigo-600'
+                      : isLandingPage && !isScrolled
+                        ? 'text-gray-100 hover:text-white'
+                        : 'text-gray-700 hover:text-indigo-600'
+                  } transition-colors duration-200`
                 }
               >
                 {item.label}
               </NavLink>
             ))}
-            {user ? (
+            {!user && (
               <>
+                <Link
+                  to="/signin"
+                  onClick={toggleMenu}
+                  className={`block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 ${
+                    isLandingPage && !isScrolled
+                      ? 'text-white hover:text-gray-200'
+                      : 'text-gray-700 hover:text-indigo-600'
+                  }`}
+                >
+                  Sign in
+                </Link>
+                <Link
+                  to="/signup"
+                  onClick={toggleMenu}
+                  className={`block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 ${
+                    isLandingPage && !isScrolled
+                      ? 'text-white hover:text-gray-200'
+                      : 'text-white bg-indigo-600 hover:bg-indigo-700'
+                  }`}
+                >
+                  Get Started
+                </Link>
+              </>
+            )}
+          </div>
+          {user && (
+            <div className="pt-4 pb-3 border-t border-gray-200">
+              <div className="flex items-center px-5">
+                <div className="flex-shrink-0">
+                  <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
+                    isLandingPage && !isScrolled ? 'bg-white/20' : 'bg-indigo-100'
+                  }`}>
+                    <User className={`h-6 w-6 ${
+                      isLandingPage && !isScrolled ? 'text-white' : 'text-indigo-600'
+                    }`} />
+                  </div>
+                </div>
+                <div className="ml-3">
+                  <div className={`text-base font-medium ${
+                    isLandingPage && !isScrolled ? 'text-white' : 'text-gray-800'
+                  }`}>
+                    {profile && profile.full_name!=='' && profile.full_name!==null ? profile.full_name : user.email?.split('@')[0]}
+                  </div>
+                  <div className={`text-sm font-medium ${
+                    isLandingPage && !isScrolled ? 'text-gray-100' : 'text-gray-500'
+                  }`}>{user.email}</div>
+                </div>
+              </div>
+              <div className="mt-3 px-2 space-y-1">
                 {profileMenuItems.map((item) => (
-                  <NavLink
+                  <Link
                     key={item.path}
                     to={item.path}
-                    onClick={() => setIsOpen(false)}
-                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-primary-50"
+                    onClick={toggleMenu}
+                    className={`block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 ${
+                      isLandingPage && !isScrolled
+                        ? 'text-white hover:text-gray-200'
+                        : 'text-gray-700 hover:text-indigo-600'
+                    }`}
                   >
-                    <div className="flex items-center space-x-2">
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.label}</span>
-                    </div>
-                  </NavLink>
+                    {item.label}
+                  </Link>
                 ))}
                 <button
                   onClick={handleSignOut}
                   disabled={isSigningOut}
-                  className="w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-primary-50 flex items-center space-x-2 disabled:opacity-50"
+                  className={`w-full text-left px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 ${
+                    isLandingPage && !isScrolled
+                      ? 'text-white hover:text-gray-200'
+                      : 'text-gray-700 hover:text-indigo-600'
+                  } disabled:opacity-50`}
                 >
-                  {isSigningOut ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <LogOut className="h-4 w-4" />
-                  )}
-                  <span>{isSigningOut ? 'Signing out...' : 'Sign out'}</span>
-                </button>
-              </>
-            ) : (
-              <div className="px-3 py-2 space-y-2">
-                <button
-                  onClick={() => {
-                    navigate('/signin');
-                    setIsOpen(false);
-                  }}
-                  className="w-full px-4 py-2 text-sm font-medium rounded-lg text-primary-600 hover:bg-primary-50 transition-colors duration-200"
-                >
-                  Sign in
-                </button>
-                <button
-                  onClick={() => {
-                    navigate('/signup');
-                    setIsOpen(false);
-                  }}
-                  className="w-full px-4 py-2 text-sm font-medium rounded-lg bg-primary-600 text-white hover:bg-primary-700 transition-colors duration-200"
-                >
-                  Sign up
+                  {isSigningOut ? 'Signing out...' : 'Sign out'}
                 </button>
               </div>
-            )}
-          </div>
-        </motion.div>
+            </div>
+          )}
+        </div>
       )}
     </nav>
   );
