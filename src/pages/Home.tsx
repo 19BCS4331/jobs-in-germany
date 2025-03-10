@@ -233,7 +233,7 @@ const Home: React.FC = () => {
               { value: "137K+", label: "IT Jobs" },
               { value: "50K+", label: "Healthcare" },
               { value: "€65K+", label: "Avg. IT Salary" },
-              { value: "€4.5K+", label: "Avg. Healthcare" }
+              { value: "€4.5K+/m", label: "Avg. Healthcare" }
             ].map((stat, index) => (
               <motion.div
                 key={index}
@@ -324,7 +324,7 @@ const Home: React.FC = () => {
                   icon: BookOpen,
                   title: 'Language Support',
                   description: 'Comprehensive German language training and certification preparation',
-                  stats: 'B1/B2 Level'
+                  stats: 'A1 - B2 Level'
                 },
                 {
                   icon: Plane,

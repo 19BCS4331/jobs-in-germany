@@ -99,23 +99,7 @@ const HowItWorks: React.FC = () => {
         {/* Content Container */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative py-24">
           <div className="text-center max-w-4xl mx-auto">
-            {/* Badge */}
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, ...springTransition }}
-              className="inline-block mb-8 relative overflow-hidden group"
-            >
-              <span className="bg-indigo-100 text-indigo-800 text-sm font-medium px-6 py-2 rounded-full inline-block relative overflow-hidden">
-                <span className="relative z-10">4 Simple Steps</span>
-                <motion.div 
-                  className="absolute inset-0 bg-indigo-200/50 rounded-full -z-[1]"
-                  variants={shimmerEffect}
-                  initial="initial"
-                  animate="animate"
-                />
-              </span>
-            </motion.div>
+            
             
             {/* Main Heading */}
             <motion.div
@@ -395,13 +379,30 @@ const HowItWorks: React.FC = () => {
               For Job Seekers
             </motion.span>
             <motion.h2 
-              className="mt-6 text-3xl font-extrabold text-gray-900 sm:text-4xl"
+              className="mt-6 mb-10 text-3xl font-extrabold text-gray-900 sm:text-4xl"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
             >
               Your Path to Success in Germany
             </motion.h2>
+            {/* Badge */}
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, ...springTransition }}
+              className="inline-block mb-2 relative overflow-hidden group"
+            >
+              <span className="bg-indigo-100 text-indigo-800 text-sm font-medium px-6 py-2 rounded-full inline-block relative overflow-hidden">
+                <span className="relative z-10">4 Simple Steps</span>
+                <motion.div 
+                  className="absolute inset-0 bg-indigo-200/50 rounded-full -z-[1]"
+                  variants={shimmerEffect}
+                  initial="initial"
+                  animate="animate"
+                />
+              </span>
+            </motion.div>
             <motion.p 
               className="mt-6 text-xl text-gray-600"
               initial={{ opacity: 0, y: 20 }}
