@@ -111,6 +111,7 @@ const DashboardLayout: React.FC = () => {
                 <NavLink
                   key={item.path}
                   to={item.path}
+                  end={item.path === '/dashboard'}
                   onClick={() => setIsSidebarOpen(false)}
                   className={({ isActive }) =>
                     `flex items-center space-x-3 px-6 py-3 text-sm font-medium transition-colors duration-200 ${
