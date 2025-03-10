@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 import type { Profile } from '../types/profile';
+import toast from 'react-hot-toast';
 
 type AuthContextType = {
   user: User | null;
@@ -17,7 +18,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check active sessions and sets the user
+    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -31,7 +32,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Listen for changes on auth state (sign in, sign out, etc.)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
-      if (session?.user) {
+        if (session?.user) {
         fetchProfile(session.user.id);
       } else {
         setProfile(null);
@@ -51,10 +52,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .single();
 
       if (error) throw error;
-      setProfile(data);
+        setProfile(data);
     } catch (error) {
       console.error('Error fetching profile:', error);
       setProfile(null);
+      toast.error('Failed to load profile', {
+        style: {
+          background: '#FEE2E2',
+          color: '#DC2626',
+        },
+      });
     } finally {
       setLoading(false);
     }

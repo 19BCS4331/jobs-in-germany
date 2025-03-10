@@ -18,6 +18,7 @@ import DashboardLayout from "./components/DashboardLayout";
 import JobSeekerProfile from "./pages/dashboard/JobSeekerProfile";
 import PaymentPage from "./pages/dashboard/PaymentPage";
 import Overview from "./pages/dashboard/Overview";
+import { Toaster } from 'react-hot-toast';
 
 // Protected route component
 const ProtectedRoute = ({
@@ -249,6 +250,23 @@ function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
           {!isDashboardPage && !isAuthPage && <Footer />}
+          <Toaster 
+            position="top-right"
+            toastOptions={{
+              duration: 3000,
+              style: {
+                background: '#fff',
+                color: '#333',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+              },
+              success: {
+                iconTheme: {
+                  primary: '#4F46E5',
+                  secondary: '#fff',
+                },
+              },
+            }}
+          />
         </>
       </AuthProvider>
     </div>

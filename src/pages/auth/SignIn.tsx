@@ -28,6 +28,16 @@ export default function SignIn() {
 
       if (error) throw error;
       navigate('/dashboard');
+      toast.success('Signed in successfully', {
+        duration: 3000,
+        position: 'bottom-right',
+        style: {
+          background: '#4F46E5',
+          color: '#fff',
+          padding: '12px 24px',
+          borderRadius: '8px',
+        },
+      });
     } catch (error: any) {
       setError(error.message);
     } finally {
