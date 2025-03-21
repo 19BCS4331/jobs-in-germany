@@ -5,9 +5,10 @@ import { ArrowLeft } from 'lucide-react';
 
 export default function AuthLayout() {
   const { user } = useAuth();
+  const preventRedirect = localStorage.getItem('preventRedirect') === 'true';
 
-  // If user is already logged in, redirect to home
-  if (user) {
+  // If user is already logged in and we're not preventing redirect, redirect to home
+  if (user && !preventRedirect) {
     return <Navigate to="/" replace />;
   }
 

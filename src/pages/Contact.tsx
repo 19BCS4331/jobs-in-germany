@@ -235,7 +235,7 @@ const Contact: React.FC = () => {
                     </div>
                     <div>
                       <h3 className="text-lg font-medium text-gray-900">Send us a Mail</h3>
-                      <p className="mt-1 text-gray-600">info@thegermanyjobs.com</p>
+                      <p className="mt-1 text-gray-600 cursor-pointer" onClick={() => window.open('mailto:info@thegermanyjobs.com', '_blank')}>info@thegermanyjobs.com</p>
                     </div>
                   </div>
                 </motion.div>
@@ -253,7 +253,8 @@ const Contact: React.FC = () => {
                     </div>
                     <div>
                       <h3 className="text-lg font-medium text-gray-900">Call Us</h3>
-                      <p className="mt-1 text-gray-600">+91 9819761300</p>
+                      <p className="mt-1 text-gray-600 cursor-pointer" onClick={() => window.open('tel:+919819761300', '_blank')}>+91 9819761300</p>
+                      <p className="mt-1 text-gray-600 cursor-pointer" onClick={() => window.open('tel:+9102266587777', '_blank')}>+91 022-66587777</p>
                     </div>
                   </div>
                 </motion.div>

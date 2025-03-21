@@ -4,6 +4,7 @@ import { signUp, AuthError } from '../../lib/auth';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
 import { Briefcase, User } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
 
 type UserType = 'job_seeker' | 'employer';
 
@@ -16,9 +17,37 @@ export default function SignUp() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<AuthError | null>(null);
 
+  const validatePassword = (password: string) => {
+    const minLength = 8;
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumbers = /\d/.test(password);
+    const hasSpecialChar = /[!@#$%^&*]/.test(password);
+
+    if (password.length < minLength) {
+      return 'Password must be at least 8 characters long';
+    }
+    if (!hasUpperCase || !hasLowerCase) {
+      return 'Password must contain both uppercase and lowercase letters';
+    }
+    if (!hasNumbers) {
+      return 'Password must contain at least one number';
+    }
+    if (!hasSpecialChar) {
+      return 'Password must contain at least one special character';
+    }
+    return null;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      setError({ message: passwordError } as AuthError);
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError({ message: 'Passwords do not match' } as AuthError);
@@ -28,27 +57,87 @@ export default function SignUp() {
     setLoading(true);
 
     try {
-      const { user } = await signUp(email, password, userType);
-      toast.success('Account created successfully!', {
-        duration: 4000,
+      // Show a toast that we're creating the account
+      const loadingToast = toast.loading('Creating your account...', {
         position: 'bottom-right',
-        style: {
-          background: '#4F46E5',
-          color: '#fff',
-          padding: '12px 24px',
-          borderRadius: '8px',
-        },
       });
-      
-      if (user) {
-        // Redirect based on user type
+
+      // Prevent automatic redirection by storing a flag in localStorage
+      localStorage.setItem('preventRedirect', 'true');
+
+      // Sign up the user and create profile
+      const { user } = await signUp(email, password, userType);
+
+      // Check if user exists before proceeding
+      if (!user) {
+        toast.error('Failed to create account', {
+          duration: 4000,
+          position: 'bottom-right',
+        });
+        return;
+      }
+
+      // Verify that the profile was created successfully by checking it directly
+      let profileCreated = false;
+      let retryCount = 0;
+      const maxRetries = 5;
+
+      while (!profileCreated && retryCount < maxRetries) {
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+
+          if (data && !error) {
+            profileCreated = true;
+          } else {
+            // Wait before retrying
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            retryCount++;
+          }
+        } catch (err) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          retryCount++;
+        }
+      }
+
+      // Dismiss the loading toast
+      toast.dismiss(loadingToast);
+
+      if (profileCreated) {
+        toast.success('Account created successfully!', {
+          duration: 4000,
+          position: 'bottom-right',
+          style: {
+            background: '#4F46E5',
+            color: '#fff',
+            padding: '12px 24px',
+            borderRadius: '8px',
+          },
+        });
+
+        // Clear the prevention flag
+        localStorage.removeItem('preventRedirect');
+
+        // Only redirect if profile was successfully created
         if (userType === 'employer') {
           navigate('/company/new');
         } else {
-          navigate('/profile');
+          navigate('/dashboard');
         }
+      } else {
+        // If profile creation failed or timed out
+        toast.error('Account created but profile setup is incomplete. Please try signing in.', {
+          duration: 6000,
+          position: 'bottom-right',
+        });
+        // Don't redirect - stay on signup page
+        localStorage.removeItem('preventRedirect');
       }
     } catch (err) {
+      localStorage.removeItem('preventRedirect');
       setError(err as AuthError);
       toast.error(err instanceof Error ? err.message : 'An error occurred', {
         duration: 4000,
@@ -72,8 +161,8 @@ export default function SignUp() {
           <span>Back to Home</span>
         </Link>
       </div>
-      
-      <motion.div 
+
+      <motion.div
         className="sm:mx-auto sm:w-full sm:max-w-md mt-8 px-4 sm:px-0 relative"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -86,7 +175,7 @@ export default function SignUp() {
             alt="Jobs in Germany"
           />
         </Link> */}
-        
+
         <h2 className="text-2xl sm:text-3xl font-extrabold text-center text-gray-900">
           Create your account
         </h2>
@@ -98,7 +187,7 @@ export default function SignUp() {
         </p>
       </motion.div>
 
-      <motion.div 
+      <motion.div
         className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0 relative"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -114,11 +203,10 @@ export default function SignUp() {
                 <button
                   type="button"
                   onClick={() => setUserType('job_seeker')}
-                  className={`relative flex items-center justify-center px-4 py-3 border ${
-                    userType === 'job_seeker'
+                  className={`relative flex items-center justify-center px-4 py-3 border ${userType === 'job_seeker'
                       ? 'border-indigo-600 bg-indigo-50 text-indigo-600'
                       : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-                  } rounded-lg transition-colors duration-200`}
+                    } rounded-lg transition-colors duration-200`}
                 >
                   <User className="h-5 w-5 mr-2" />
                   <span className="font-medium">Job Seeker</span>
@@ -133,11 +221,10 @@ export default function SignUp() {
                 <button
                   type="button"
                   onClick={() => setUserType('employer')}
-                  className={`relative flex items-center justify-center px-4 py-3 border ${
-                    userType === 'employer'
+                  className={`relative flex items-center justify-center px-4 py-3 border ${userType === 'employer'
                       ? 'border-indigo-600 bg-indigo-50 text-indigo-600'
                       : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-                  } rounded-lg transition-colors duration-200`}
+                    } rounded-lg transition-colors duration-200`}
                 >
                   <Briefcase className="h-5 w-5 mr-2" />
                   <span className="font-medium">Employer</span>

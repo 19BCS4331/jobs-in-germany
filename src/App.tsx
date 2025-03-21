@@ -85,7 +85,7 @@ function App() {
               element={
                 <>
                   <Home />
-                  <Footer />
+                  {/* <Footer /> */}
                 </>
               }
             />
@@ -94,7 +94,7 @@ function App() {
               element={
                 <>
                   <HowItWorks />
-                  <Footer />
+                  {/* <Footer /> */}
                 </>
               }
             />
@@ -103,7 +103,7 @@ function App() {
               element={
                 <>
                   <Resources />
-                  <Footer />
+                  {/* <Footer /> */}
                 </>
               }
             />
@@ -112,7 +112,7 @@ function App() {
               element={
                 <>
                   <Blog />
-                  <Footer />
+                  {/* <Footer /> */}
                 </>
               }
             />
@@ -121,7 +121,7 @@ function App() {
               element={
                 <>
                   <Contact />
-                  <Footer />
+                  {/* <Footer /> */}
                 </>
               }
             />
@@ -130,7 +130,7 @@ function App() {
               element={
                 <>
                   <PrivacyPolicy />
-                  <Footer />
+                  {/* <Footer /> */}
                 </>
               }
             />
@@ -139,7 +139,7 @@ function App() {
               element={
                 <>
                   <TermsOfService />
-                  <Footer />
+                  {/* <Footer /> */}
                 </>
               }
             />

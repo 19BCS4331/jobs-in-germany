@@ -1,74 +1,75 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from './supabase';
-import type { Profile } from '../types/profile';
 import toast from 'react-hot-toast';
 
 type AuthContextType = {
   user: User | null;
-  profile: Profile | null;
   loading: boolean;
+  signOut: () => Promise<void>;
 };
 
-const AuthContext = createContext<AuthContextType>({ user: null, profile: null, loading: true });
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  loading: true,
+  signOut: async () => {},
+});
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      } else {
-        setProfile(null);
-        setLoading(false);
-      }
-    });
+    const initializeAuth = async () => {
+      try {
+        setLoading(true);
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error fetching session:', error);
+          setLoading(false);
+          return;
+        }
 
-    // Listen for changes on auth state (sign in, sign out, etc.)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-        if (session?.user) {
-        fetchProfile(session.user.id);
-      } else {
-        setProfile(null);
+        console.log('Initial session:', session ? 'exists' : 'none');
+        setUser(session?.user ?? null);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error initializing auth:', error);
         setLoading(false);
       }
+    };
+
+    initializeAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state changed:', event);
+      
+      if (event === 'SIGNED_OUT') {
+        localStorage.removeItem('preventRedirect');
+      }
+      
+      setUser(session?.user ?? null);
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchProfile = async (userId: string) => {
+  const signOut = async () => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
+      const { error } = await supabase.auth.signOut();
       if (error) throw error;
-        setProfile(data);
+      setUser(null);
+      toast.success('Signed out successfully');
     } catch (error) {
-      console.error('Error fetching profile:', error);
-      setProfile(null);
-      toast.error('Failed to load profile', {
-        style: {
-          background: '#FEE2E2',
-          color: '#DC2626',
-        },
-      });
-    } finally {
-      setLoading(false);
+      console.error('Error signing out:', error);
+      toast.error('Failed to sign out');
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading }}>
+    <AuthContext.Provider value={{ user, loading, signOut }}>
       {children}
     </AuthContext.Provider>
   );
@@ -81,5 +82,3 @@ export const useAuth = () => {
   }
   return context;
 };
-
-export type { Profile };

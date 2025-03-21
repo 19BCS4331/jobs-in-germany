@@ -35,8 +35,8 @@ export async function createUserProfile(user: User, userType?: 'job_seeker' | 'e
         id: user.id,
         email: email || user.email,
         full_name: full_name,
-        first_name: firstName,
-        last_name: lastName,
+        // first_name: firstName,
+        // last_name: lastName,
         user_type: finalUserType,
         // avatar_url: user.user_metadata?.avatar_url,
         settings: {
@@ -96,7 +96,11 @@ export async function signUp(email: string, password: string, userType: 'job_see
       };
     }
 
+    // Create the user profile and wait for it to complete
     await createUserProfile(authData.user, userType);
+
+    // Add a small delay to ensure the profile is available in the database
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     return authData;
   } catch (err) {
