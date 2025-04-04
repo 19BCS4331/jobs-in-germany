@@ -14,7 +14,7 @@ const Footer: React.FC = () => {
               Connecting international talent with German employers. Find your dream job in Europe's largest economy.
             </p>
           </div>
-          <div>
+          {/* <div>
             <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">
               Quick Links
             </h3>
@@ -45,7 +45,7 @@ const Footer: React.FC = () => {
                 </Link>
               </li>
             </ul>
-          </div>
+          </div> */}
           <div>
             <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">
               Legal
