@@ -1420,6 +1420,7 @@ const Home: React.FC = () => {
               variants={buttonHover}
               whileHover="hover"
               whileTap={{ scale: 0.95 }}
+              onClick={() => navigate('/signup')}
             >
               Get Started
               <motion.div

@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import {
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Home from "./pages/Home";
@@ -18,73 +24,66 @@ import DashboardLayout from "./components/DashboardLayout";
 import JobSeekerProfile from "./pages/dashboard/JobSeekerProfile";
 import PaymentPage from "./pages/dashboard/PaymentPage";
 import Overview from "./pages/dashboard/Overview";
-import { Toaster } from 'react-hot-toast';
+import { Toaster } from "react-hot-toast";
 import SavedJobs from "./pages/dashboard/SavedJobs";
 import ApplicationsManagement from "./pages/dashboard/ApplicationsManagement";
 import JobsManagement from "./pages/dashboard/JobsManagement";
 import MyApplications from "./pages/dashboard/MyApplications";
 import JobSeekerDashboard from "./pages/dashboard/JobSeekerDashboard";
 import EmployerDashboard from "./pages/dashboard/EmployerDashboard";
+import { Profile } from "./types/profile";
+import Companies from "./pages/Companies";
+import CompaniesManagement from "./pages/dashboard/CompaniesManagement";
+import ProfileSettings from "./pages/dashboard/Profile";
+import Settings from "./pages/dashboard/Settings";
+import Jobs from "./pages/Jobs";
+import { SavedJobsProvider } from "./contexts/SavedJobsContext";
+import JobDetails from "./pages/JobDetails";
+import CompanyForm from "./pages/dashboard/CompanyForm";
+import EditCompany from "./pages/company/Edit";
+import JobPostingForm from "./pages/dashboard/JobPostingForm";
+import NewCompany from "./pages/company/New";
 
 // Protected route component
 const ProtectedRoute = ({
   children,
   allowedUserType,
 }: {
-  children: React.ReactNode;
-  allowedUserType?: "employer" | "job_seeker";
+  children:
+    | React.ReactNode
+    | ((props: { profile: Profile | null }) => React.ReactNode);
+  allowedUserType?: "job_seeker" | "employer";
 }) => {
   const { user, profile, loading } = useAuth();
-  const [localLoading, setLocalLoading] = useState(true);
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    // Wait a bit for the profile to be loaded after signup
-    if (user && !profile) {
-      const timer = setTimeout(() => {
-        setLocalLoading(false);
-      }, 1000); // Give it a second to load the profile
-      return () => clearTimeout(timer);
-    } else {
-      setLocalLoading(false);
-    }
-  }, [user, profile]);
-
-  if (loading || localLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    );
+  if (loading) {
+    return <div>Loading...</div>;
   }
 
   if (!user) {
-    return <Navigate to="/signin" replace />;
+    navigate("/signin");
+    return null;
   }
 
-  // Only check user type if profile is loaded and we have an allowed type
-  if (profile && allowedUserType && profile.user_type !== allowedUserType) {
+  if (allowedUserType && profile?.user_type !== allowedUserType) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        You don't have permission to access this page.
-      </div>
+      <div>Access denied. You don't have permission to view this page.</div>
     );
   }
-  console.log(profile?.user_type)
 
-  return <>{children}</>;
+  return typeof children === "function" ? children({ profile }) : children;
 };
 
 function App() {
   const location = useLocation();
-  const isAuthPage = ['/signin', '/signup'].includes(location.pathname);
-  const isDashboardPage = location.pathname.startsWith('/dashboard');
-
-
-
+  const isAuthPage = ["/signin", "/signup"].includes(location.pathname);
+  const isDashboardPage = location.pathname.startsWith("/dashboard");
 
   return (
     <div className="flex flex-col min-h-screen">
       <AuthProvider>
+        <SavedJobsProvider>
         <>
           <ScrollToTop />
           {!isAuthPage && <Navbar />}
@@ -154,6 +153,25 @@ function App() {
               }
             />
 
+            <Route
+              path="/jobs"
+              element={
+                <>
+                  <Jobs />
+                  {/* <Footer /> */}
+                </>
+              }
+            />
+            <Route
+                path="/jobs/:id"
+                element={
+                  <>
+                    <JobDetails />
+                    <Footer />
+                  </>
+                }
+              />
+
             {/* Auth routes */}
             <Route element={<AuthLayout />}>
               <Route path="/signin" element={<SignIn />} />
@@ -169,12 +187,18 @@ function App() {
                 </ProtectedRoute>
               }
             >
-              {/* Job Seeker Routes */}
+              {/* Root Dashboard Route - Conditionally renders based on user type */}
               <Route
                 path=""
                 element={
-                  <ProtectedRoute allowedUserType="job_seeker">
-                    <JobSeekerDashboard />
+                  <ProtectedRoute>
+                    {({ profile }) =>
+                      profile?.user_type === "employer" ? (
+                        <EmployerDashboard />
+                      ) : (
+                        <JobSeekerDashboard />
+                      )
+                    }
                   </ProtectedRoute>
                 }
               />
@@ -182,7 +206,7 @@ function App() {
                 path="applications"
                 element={
                   <ProtectedRoute allowedUserType="job_seeker">
-                    <MyApplications/>
+                    <MyApplications />
                   </ProtectedRoute>
                 }
               />
@@ -190,7 +214,7 @@ function App() {
                 path="saved-jobs"
                 element={
                   <ProtectedRoute allowedUserType="job_seeker">
-                    <SavedJobs/>
+                    <SavedJobs />
                   </ProtectedRoute>
                 }
               />
@@ -211,47 +235,71 @@ function App() {
                 }
               />
 
-              {/* Employer Routes */}
+              {/* Employer routes */}
               <Route
-                path=""
-                element={
-                  <ProtectedRoute allowedUserType="employer">
-                    <EmployerDashboard />
-                  </ProtectedRoute>
-                }
-              />
+                  path="companies/manage"
+                  element={
+                    <ProtectedRoute allowedUserType="employer">
+                      <CompaniesManagement />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="companies/new"
+                  element={
+                    <ProtectedRoute allowedUserType="employer">
+                      <CompanyForm />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="companies/edit/:id"
+                  element={
+                    <ProtectedRoute allowedUserType="employer">
+                      <EditCompany />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="jobs/manage"
+                  element={
+                    <ProtectedRoute allowedUserType="employer">
+                      <JobsManagement />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="jobs/new"
+                  element={
+                    <ProtectedRoute allowedUserType="employer">
+                      <JobPostingForm />
+                    </ProtectedRoute>
+                  }
+                />
 
-              <Route
-                path="companies/manage"
-                element={
-                  <ProtectedRoute allowedUserType="employer">
-                    <div>Manage Companies</div>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="jobs/manage"
-                element={
-                  <ProtectedRoute allowedUserType="employer">
-                    <div>Manage Job Postings</div>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="applications/manage"
-                element={
-                  <ProtectedRoute allowedUserType="employer">
-                    <div>Manage Applications</div>
-                  </ProtectedRoute>
-                }
-              />
+                <Route
+                  path="jobs/:id/edit"
+                  element={
+                    <ProtectedRoute allowedUserType="employer">
+                      <JobPostingForm />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="applications/manage"
+                  element={
+                    <ProtectedRoute allowedUserType="employer">
+                      <ApplicationsManagement />
+                    </ProtectedRoute>
+                  }
+                />
 
               {/* Common Routes */}
               <Route
                 path="profile-settings"
                 element={
                   <ProtectedRoute>
-                    <div>Profile Settings</div>
+                    <ProfileSettings />
                   </ProtectedRoute>
                 }
               />
@@ -259,34 +307,46 @@ function App() {
                 path="settings"
                 element={
                   <ProtectedRoute>
-                    <div>Account Settings</div>
+                    <Settings />
                   </ProtectedRoute>
                 }
               />
             </Route>
 
+            {/* Company management routes */}
+            <Route
+                path="/company/new"
+                element={
+                  <ProtectedRoute allowedUserType="employer">
+                    <NewCompany />
+                  </ProtectedRoute>
+                }
+              />
+
             {/* Catch all */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
           {!isDashboardPage && !isAuthPage && <Footer />}
-          <Toaster 
+          <Toaster
             position="top-right"
             toastOptions={{
               duration: 3000,
               style: {
-                background: '#fff',
-                color: '#333',
-                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                background: "#fff",
+                color: "#333",
+                boxShadow:
+                  "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
               },
               success: {
                 iconTheme: {
-                  primary: '#4F46E5',
-                  secondary: '#fff',
+                  primary: "#4F46E5",
+                  secondary: "#fff",
                 },
               },
             }}
           />
         </>
+        </SavedJobsProvider>
       </AuthProvider>
     </div>
   );

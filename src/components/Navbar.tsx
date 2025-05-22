@@ -92,6 +92,7 @@ const Navbar = () => {
     { path: '/how-it-works', label: 'How It Works' },
     // { path: '/resources', label: 'Resources' },
     // { path: '/blog', label: 'Blog' },
+    { path: '/jobs', label: 'Find Jobs' ,blocked: profile?.user_type === 'employer' ? true : false},
     { path: '/contact', label: 'Contact Us' },
   ];
 
@@ -122,6 +123,7 @@ const Navbar = () => {
             {/* Desktop Navigation */}
             <div className="hidden md:ml-6 md:flex md:space-x-4">
               {navItems.map((item) => (
+                item.blocked ? null : (
                 <NavLink
                   key={item.path}
                   to={item.path}
@@ -137,7 +139,7 @@ const Navbar = () => {
                 >
                   {item.label}
                 </NavLink>
-              ))}
+                )))}
             </div>
           </div>
 
