@@ -203,7 +203,7 @@ const Home: React.FC = () => {
             animate="animate"
           >
             <motion.button
-              className="px-8 py-4 bg-white text-indigo-600 rounded-lg font-semibold hover:bg-indigo-50 transition-colors duration-200 flex items-center justify-center space-x-2 group"
+              className="px-8 py-4 bg-white text-indigo-600 rounded-full font-semibold hover:bg-indigo-50 transition-colors duration-200 flex items-center justify-center space-x-2 group"
               variants={buttonHover}
               whileHover="hover"
               onClick={() => navigate('/how-it-works')}
@@ -212,7 +212,7 @@ const Home: React.FC = () => {
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" />
             </motion.button>
             <motion.button
-              className="px-8 py-4 bg-indigo-600/90 text-white rounded-lg font-semibold hover:bg-indigo-700 border border-indigo-400/30 backdrop-blur-sm transition-colors duration-200 flex items-center justify-center space-x-2 group"
+              className="px-8 py-4 bg-indigo-600/90 text-white rounded-full font-semibold hover:bg-indigo-700 border border-indigo-400/30 backdrop-blur-sm transition-colors duration-200 flex items-center justify-center space-x-2 group"
               variants={buttonHover}
               whileHover="hover"
               onClick={scrollToAboutUs}

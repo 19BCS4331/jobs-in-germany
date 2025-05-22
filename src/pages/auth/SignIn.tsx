@@ -6,8 +6,10 @@ import { supabase } from '../../lib/supabase';
 // import { useAuth } from '../../lib/AuthContext';
 // import { createUserProfile } from '../../lib/auth';
 import toast from 'react-hot-toast';
+import { useAuth } from '../../lib/AuthContext';
 
 export default function SignIn() {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -15,48 +17,56 @@ export default function SignIn() {
   const [error, setError] = useState<string | null>(null);
   const [showUserTypeDialog, setShowUserTypeDialog] = useState(false);
 
-  const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
+  // Then modify the handleSignIn function:
+const handleSignIn = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setLoading(true);
+  setError(null);
+  
+  // Add validation
+  if (!email || !password) {
+    setError('Please fill in all fields');
+    setLoading(false);
+    return;
+  }
 
-    // Add validation
-    if (!email || !password) {
-      setError('Please fill in all fields');
-      setLoading(false);
-      return;
-    }
+  if (!email.includes('@')) {
+    setError('Please enter a valid email');
+    setLoading(false);
+    return;
+  }
 
-    if (!email.includes('@')) {
-      setError('Please enter a valid email');
-      setLoading(false);
-      return;
-    }
+  try {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-      navigate('/dashboard');
-      toast.success('Signed in successfully', {
-        duration: 3000,
-        position: 'bottom-right',
-        style: {
-          background: '#4F46E5',
-          color: '#fff',
-          padding: '12px 24px',
-          borderRadius: '8px',
-        },
-      });
-    } catch (error: any) {
-      setError(error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+    if (error) throw error;
+    
+    // Don't navigate immediately, wait for auth state to update
+    toast.success('Signed in successfully', {
+      duration: 3000,
+      position: 'bottom-right',
+      style: {
+        background: '#4F46E5',
+        color: '#fff',
+        padding: '12px 24px',
+        borderRadius: '8px',
+      },
+    });
+    
+    // Optional: You could add a small delay here if needed
+    // setTimeout(() => navigate('/dashboard'), 500);
+    
+    // Or just navigate directly, the profile will be loaded by AuthContext
+    navigate('/dashboard');
+  } catch (error: any) {
+    setError(error.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   // const handleGoogleSignIn = async (userType: 'job_seeker' | 'employer') => {
   //   try {

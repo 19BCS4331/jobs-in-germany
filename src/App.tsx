@@ -19,6 +19,12 @@ import JobSeekerProfile from "./pages/dashboard/JobSeekerProfile";
 import PaymentPage from "./pages/dashboard/PaymentPage";
 import Overview from "./pages/dashboard/Overview";
 import { Toaster } from 'react-hot-toast';
+import SavedJobs from "./pages/dashboard/SavedJobs";
+import ApplicationsManagement from "./pages/dashboard/ApplicationsManagement";
+import JobsManagement from "./pages/dashboard/JobsManagement";
+import MyApplications from "./pages/dashboard/MyApplications";
+import JobSeekerDashboard from "./pages/dashboard/JobSeekerDashboard";
+import EmployerDashboard from "./pages/dashboard/EmployerDashboard";
 
 // Protected route component
 const ProtectedRoute = ({
@@ -63,6 +69,7 @@ const ProtectedRoute = ({
       </div>
     );
   }
+  console.log(profile?.user_type)
 
   return <>{children}</>;
 };
@@ -71,6 +78,9 @@ function App() {
   const location = useLocation();
   const isAuthPage = ['/signin', '/signup'].includes(location.pathname);
   const isDashboardPage = location.pathname.startsWith('/dashboard');
+
+
+
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -164,7 +174,7 @@ function App() {
                 path=""
                 element={
                   <ProtectedRoute allowedUserType="job_seeker">
-                    <Overview />
+                    <JobSeekerDashboard />
                   </ProtectedRoute>
                 }
               />
@@ -172,7 +182,7 @@ function App() {
                 path="applications"
                 element={
                   <ProtectedRoute allowedUserType="job_seeker">
-                    <div>My Applications</div>
+                    <MyApplications/>
                   </ProtectedRoute>
                 }
               />
@@ -180,7 +190,7 @@ function App() {
                 path="saved-jobs"
                 element={
                   <ProtectedRoute allowedUserType="job_seeker">
-                    <div>Saved Jobs</div>
+                    <SavedJobs/>
                   </ProtectedRoute>
                 }
               />
@@ -202,6 +212,15 @@ function App() {
               />
 
               {/* Employer Routes */}
+              <Route
+                path=""
+                element={
+                  <ProtectedRoute allowedUserType="employer">
+                    <EmployerDashboard />
+                  </ProtectedRoute>
+                }
+              />
+
               <Route
                 path="companies/manage"
                 element={

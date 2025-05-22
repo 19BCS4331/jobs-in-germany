@@ -5,6 +5,7 @@ import { useAuth } from '../lib/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
+import type { Profile } from '../types/profile';
 
 interface SidebarItem {
   icon: React.ElementType;
@@ -16,7 +17,7 @@ const DashboardLayout: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [profile, setProfile] = useState(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -59,6 +60,8 @@ const DashboardLayout: React.FC = () => {
 
   const jobSeekerSidebarItems: SidebarItem[] = [
     { icon: BarChart3, label: 'Overview', path: '/dashboard' },
+    { icon: FileText, label: 'My Applications', path: '/dashboard/applications' },
+    { icon: BookOpen, label: 'Saved Jobs', path: '/dashboard/saved-jobs' },
     { icon: User, label: 'My Profile', path: '/dashboard/my-profile' },
     { icon: CreditCard, label: 'Payments', path: '/dashboard/payments' },
   ];
@@ -119,7 +122,7 @@ const DashboardLayout: React.FC = () => {
       {/* Main Content */}
       <main className="flex-1 min-w-0 overflow-y-auto">
         <motion.div 
-          className="mt-14 lg:mt-0 p-4 lg:p-8"
+          className="mt-14 lg:mt-16 p-4 lg:p-8"
           initial={{ opacity: 0, y: -3 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: 'spring', stiffness: 200, damping: 25 }}
