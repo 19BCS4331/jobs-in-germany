@@ -92,8 +92,9 @@ const Navbar = () => {
     { path: '/how-it-works', label: 'How It Works' },
     // { path: '/resources', label: 'Resources' },
     // { path: '/blog', label: 'Blog' },
-    { path: '/jobs', label: 'Find Jobs' ,blocked: profile?.user_type === 'employer' ? true : false},
+    { path: '/jobs', label: 'Find Jobs', blocked: profile?.user_type === 'employer' ? true : false },
     { path: '/contact', label: 'Contact Us' },
+    { path: '/learn-german', label: 'Learn German for Free',highlight: true  },
   ];
 
   const profileMenuItems = profile?.user_type === 'employer' ? [
@@ -106,7 +107,7 @@ const Navbar = () => {
     <nav 
       className={`fixed w-full top-0 z-50 transition-all duration-300 ${
         isLandingPage && !isScrolled
-          ? 'bg-transparent'
+          ? isOpen ? 'bg-black/90' : 'bg-transparent'
           : 'bg-white shadow-md'
       }`}
     >
@@ -261,7 +262,7 @@ const Navbar = () => {
                     isActive
                       ? isLandingPage && !isScrolled ? 'text-white' : 'text-indigo-600'
                       : isLandingPage && !isScrolled
-                        ? 'text-gray-100 hover:text-white'
+                        ? 'text-gray-100 hover:text-whit'
                         : 'text-gray-700 hover:text-indigo-600'
                   } transition-colors duration-200`
                 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import {
   Routes,
   Route,
@@ -23,7 +23,7 @@ import ScrollToTop from "./components/ScrollToTop";
 import DashboardLayout from "./components/DashboardLayout";
 import JobSeekerProfile from "./pages/dashboard/JobSeekerProfile";
 import PaymentPage from "./pages/dashboard/PaymentPage";
-import Overview from "./pages/dashboard/Overview";
+// import Overview from "./pages/dashboard/Overview";
 import { Toaster } from "react-hot-toast";
 import SavedJobs from "./pages/dashboard/SavedJobs";
 import ApplicationsManagement from "./pages/dashboard/ApplicationsManagement";
@@ -32,7 +32,7 @@ import MyApplications from "./pages/dashboard/MyApplications";
 import JobSeekerDashboard from "./pages/dashboard/JobSeekerDashboard";
 import EmployerDashboard from "./pages/dashboard/EmployerDashboard";
 import { Profile } from "./types/profile";
-import Companies from "./pages/Companies";
+// import Companies from "./pages/Companies";
 import CompaniesManagement from "./pages/dashboard/CompaniesManagement";
 import ProfileSettings from "./pages/dashboard/Profile";
 import Settings from "./pages/dashboard/Settings";
@@ -43,6 +43,7 @@ import CompanyForm from "./pages/dashboard/CompanyForm";
 import EditCompany from "./pages/company/Edit";
 import JobPostingForm from "./pages/dashboard/JobPostingForm";
 import NewCompany from "./pages/company/New";
+import LearnGerman from "./pages/LearnGerman";
 
 // Protected route component
 const ProtectedRoute = ({
@@ -84,85 +85,94 @@ function App() {
     <div className="flex flex-col min-h-screen">
       <AuthProvider>
         <SavedJobsProvider>
-        <>
-          <ScrollToTop />
-          {!isAuthPage && <Navbar />}
-          <Routes>
-            {/* Public routes */}
-            <Route
-              path="/"
-              element={
-                <>
-                  <Home />
-                  {/* <Footer /> */}
-                </>
-              }
-            />
-            <Route
-              path="/how-it-works"
-              element={
-                <>
-                  <HowItWorks />
-                  {/* <Footer /> */}
-                </>
-              }
-            />
-            <Route
-              path="/resources"
-              element={
-                <>
-                  <Resources />
-                  {/* <Footer /> */}
-                </>
-              }
-            />
-            <Route
-              path="/blog"
-              element={
-                <>
-                  <Blog />
-                  {/* <Footer /> */}
-                </>
-              }
-            />
-            <Route
-              path="/contact"
-              element={
-                <>
-                  <Contact />
-                  {/* <Footer /> */}
-                </>
-              }
-            />
-            <Route
-              path="/privacy-policy"
-              element={
-                <>
-                  <PrivacyPolicy />
-                  {/* <Footer /> */}
-                </>
-              }
-            />
-            <Route
-              path="/terms-of-service"
-              element={
-                <>
-                  <TermsOfService />
-                  {/* <Footer /> */}
-                </>
-              }
-            />
+          <>
+            <ScrollToTop />
+            {!isAuthPage && <Navbar />}
+            <Routes>
+              {/* Public routes */}
+              <Route
+                path="/"
+                element={
+                  <>
+                    <Home />
+                    {/* <Footer /> */}
+                  </>
+                }
+              />
+              <Route
+                path="/how-it-works"
+                element={
+                  <>
+                    <HowItWorks />
+                    {/* <Footer /> */}
+                  </>
+                }
+              />
+              <Route
+                path="/resources"
+                element={
+                  <>
+                    <Resources />
+                    {/* <Footer /> */}
+                  </>
+                }
+              />
+              <Route
+                path="/blog"
+                element={
+                  <>
+                    <Blog />
+                    {/* <Footer /> */}
+                  </>
+                }
+              />
+              <Route
+                path="/contact"
+                element={
+                  <>
+                    <Contact />
+                    {/* <Footer /> */}
+                  </>
+                }
+              />
+              <Route
+                path="/learn-german"
+                element={
+                  <>
+                    <LearnGerman />
+                    <Footer />
+                  </>
+                }
+              />
+              <Route
+                path="/privacy-policy"
+                element={
+                  <>
+                    <PrivacyPolicy />
+                    {/* <Footer /> */}
+                  </>
+                }
+              />
+              <Route
+                path="/terms-of-service"
+                element={
+                  <>
+                    <TermsOfService />
+                    {/* <Footer /> */}
+                  </>
+                }
+              />
 
-            <Route
-              path="/jobs"
-              element={
-                <>
-                  <Jobs />
-                  {/* <Footer /> */}
-                </>
-              }
-            />
-            <Route
+              <Route
+                path="/jobs"
+                element={
+                  <>
+                    <Jobs />
+                    {/* <Footer /> */}
+                  </>
+                }
+              />
+              <Route
                 path="/jobs/:id"
                 element={
                   <>
@@ -172,71 +182,71 @@ function App() {
                 }
               />
 
-            {/* Auth routes */}
-            <Route element={<AuthLayout />}>
-              <Route path="/signin" element={<SignIn />} />
-              <Route path="/signup" element={<SignUp />} />
-            </Route>
+              {/* Auth routes */}
+              <Route element={<AuthLayout />}>
+                <Route path="/signin" element={<SignIn />} />
+                <Route path="/signup" element={<SignUp />} />
+              </Route>
 
-            {/* Dashboard routes */}
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <DashboardLayout />
-                </ProtectedRoute>
-              }
-            >
-              {/* Root Dashboard Route - Conditionally renders based on user type */}
+              {/* Dashboard routes */}
               <Route
-                path=""
+                path="/dashboard"
                 element={
                   <ProtectedRoute>
-                    {({ profile }) =>
-                      profile?.user_type === "employer" ? (
-                        <EmployerDashboard />
-                      ) : (
-                        <JobSeekerDashboard />
-                      )
-                    }
+                    <DashboardLayout />
                   </ProtectedRoute>
                 }
-              />
-              <Route
-                path="applications"
-                element={
-                  <ProtectedRoute allowedUserType="job_seeker">
-                    <MyApplications />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="saved-jobs"
-                element={
-                  <ProtectedRoute allowedUserType="job_seeker">
-                    <SavedJobs />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="my-profile"
-                element={
-                  <ProtectedRoute allowedUserType="job_seeker">
-                    <JobSeekerProfile />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="payments"
-                element={
-                  <ProtectedRoute allowedUserType="job_seeker">
-                    <PaymentPage />
-                  </ProtectedRoute>
-                }
-              />
+              >
+                {/* Root Dashboard Route - Conditionally renders based on user type */}
+                <Route
+                  path=""
+                  element={
+                    <ProtectedRoute>
+                      {({ profile }) =>
+                        profile?.user_type === "employer" ? (
+                          <EmployerDashboard />
+                        ) : (
+                          <JobSeekerDashboard />
+                        )
+                      }
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="applications"
+                  element={
+                    <ProtectedRoute allowedUserType="job_seeker">
+                      <MyApplications />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="saved-jobs"
+                  element={
+                    <ProtectedRoute allowedUserType="job_seeker">
+                      <SavedJobs />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="my-profile"
+                  element={
+                    <ProtectedRoute allowedUserType="job_seeker">
+                      <JobSeekerProfile />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="payments"
+                  element={
+                    <ProtectedRoute allowedUserType="job_seeker">
+                      <PaymentPage />
+                    </ProtectedRoute>
+                  }
+                />
 
-              {/* Employer routes */}
-              <Route
+                {/* Employer routes */}
+                <Route
                   path="companies/manage"
                   element={
                     <ProtectedRoute allowedUserType="employer">
@@ -294,27 +304,27 @@ function App() {
                   }
                 />
 
-              {/* Common Routes */}
-              <Route
-                path="profile-settings"
-                element={
-                  <ProtectedRoute>
-                    <ProfileSettings />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="settings"
-                element={
-                  <ProtectedRoute>
-                    <Settings />
-                  </ProtectedRoute>
-                }
-              />
-            </Route>
+                {/* Common Routes */}
+                <Route
+                  path="profile-settings"
+                  element={
+                    <ProtectedRoute>
+                      <ProfileSettings />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="settings"
+                  element={
+                    <ProtectedRoute>
+                      <Settings />
+                    </ProtectedRoute>
+                  }
+                />
+              </Route>
 
-            {/* Company management routes */}
-            <Route
+              {/* Company management routes */}
+              <Route
                 path="/company/new"
                 element={
                   <ProtectedRoute allowedUserType="employer">
@@ -323,29 +333,29 @@ function App() {
                 }
               />
 
-            {/* Catch all */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-          {!isDashboardPage && !isAuthPage && <Footer />}
-          <Toaster
-            position="top-right"
-            toastOptions={{
-              duration: 3000,
-              style: {
-                background: "#fff",
-                color: "#333",
-                boxShadow:
-                  "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-              },
-              success: {
-                iconTheme: {
-                  primary: "#4F46E5",
-                  secondary: "#fff",
+              {/* Catch all */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+            {!isDashboardPage && !isAuthPage && <Footer />}
+            <Toaster
+              position="top-right"
+              toastOptions={{
+                duration: 3000,
+                style: {
+                  background: "#fff",
+                  color: "#333",
+                  boxShadow:
+                    "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
                 },
-              },
-            }}
-          />
-        </>
+                success: {
+                  iconTheme: {
+                    primary: "#4F46E5",
+                    secondary: "#fff",
+                  },
+                },
+              }}
+            />
+          </>
         </SavedJobsProvider>
       </AuthProvider>
     </div>
