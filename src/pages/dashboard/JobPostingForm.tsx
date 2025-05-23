@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../lib/AuthContext';
-import { Briefcase, Save, Loader2 } from 'lucide-react';
+import { Briefcase, Save, Loader2, FileText, DollarSign } from 'lucide-react';
 import { getJob, createJob, updateJob, Job, getCompanyByOwner } from '../../lib/api';
 import { toast } from 'react-hot-toast';
 import Input from '../../components/forms/Input';
@@ -17,6 +17,8 @@ interface FormData {
   salary_max: number | null;
   requirements: string;
   company_id: string;
+  is_active: boolean; // New field
+  benefits: string[]; // New field
 }
 
 interface FormErrors {
@@ -44,6 +46,8 @@ const initialFormData: FormData = {
   salary_max: null,
   requirements: '',
   company_id: '',
+  is_active: true, // Default to active
+  benefits: [], // Empty benefits array
 };
 
 const jobTypes = [
@@ -56,10 +60,13 @@ const jobTypes = [
 const JobPostingForm: React.FC = () => {
   const navigate = useNavigate();
   const { id: jobId } = useParams<{ id: string }>();
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
+  
+  // New state for benefits input
+  const [newBenefit, setNewBenefit] = useState('');
 
   useEffect(() => {
     if (user) {
@@ -74,7 +81,7 @@ const JobPostingForm: React.FC = () => {
       const company = await getCompanyByOwner(user.id);
       if (!company) {
         toast.error('No company found. Please create a company first.');
-        navigate('/dashboard/companies/new');
+        navigate('/company/new');
         return;
       }
 
@@ -102,6 +109,8 @@ const JobPostingForm: React.FC = () => {
           salary_max: job.salary_max ?? null,
           requirements: job.requirements.join('\n'),
           company_id: job.company_id,
+          is_active: job.is_active !== false, // Default to true if not specified
+          benefits: job.benefits || [], // Use benefits if available
         });
       } else {
         // For new job creation, just set the company_id
@@ -114,7 +123,7 @@ const JobPostingForm: React.FC = () => {
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
+    const { name, value, type } = e.target;
     
     // Clear error when user starts typing
     if (isFormField(name) && errors[name]) {
@@ -125,61 +134,85 @@ const JobPostingForm: React.FC = () => {
       if (name === 'salary_min' || name === 'salary_max') {
         return { ...prev, [name]: parseFloat(value) || null };
       }
+      if (type === 'checkbox') {
+        return { ...prev, [name]: (e.target as HTMLInputElement).checked };
+      }
       return { ...prev, [name]: value };
     });
   };
 
   const handleRequirementsChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const requirements = e.target.value.split('\n').filter(req => req.trim());
-    setFormData(prev => ({ ...prev, requirements: requirements.join('\n') }));
+    const requirements = e.target.value;
+    setFormData(prev => ({ ...prev, requirements }));
+  };
+  
+  // Add benefit functions
+  const addBenefit = () => {
+    if (newBenefit.trim()) {
+      setFormData(prev => ({
+        ...prev,
+        benefits: [...prev.benefits, newBenefit.trim()]
+      }));
+      setNewBenefit('');
+    }
+  };
+
+  const removeBenefit = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      benefits: prev.benefits.filter((_, i) => i !== index)
+    }));
   };
 
   const validateForm = (formData: FormData): FormErrors => {
-    const newErrors: FormErrors = {};
+    const errors: FormErrors = {};
 
-    if (!formData.title.trim()) newErrors.title = 'Title is required';
-    if (!formData.description.trim()) newErrors.description = 'Description is required';
-    if (!formData.location.trim()) newErrors.location = 'Location is required';
-    if (!formData.type) newErrors.type = 'Job type is required';
-    if (!formData.requirements.length) newErrors.requirements = 'At least one requirement is required';
-    if (!formData.company_id) newErrors.company_id = 'Please select a company';
-
-    // Salary validation
-    const minSalary = formData.salary_min;
-    const maxSalary = formData.salary_max;
-
-    if (minSalary !== null && minSalary <= 0) {
-      newErrors.salary_min = 'Minimum salary must be greater than 0';
+    if (!formData.title.trim()) {
+      errors.title = 'Job title is required';
     }
 
-    if (maxSalary !== null && maxSalary <= 0) {
-      newErrors.salary_max = 'Maximum salary must be greater than 0';
+    if (!formData.description.trim()) {
+      errors.description = 'Job description is required';
     }
 
-    if (minSalary !== null && maxSalary !== null && maxSalary < minSalary) {
-      newErrors.salary_max = 'Maximum salary must be greater than minimum salary';
+    if (!formData.location.trim()) {
+      errors.location = 'Location is required';
     }
 
-    return newErrors;
+    if (!formData.type) {
+      errors.type = 'Job type is required';
+    }
+
+    if (formData.salary_min !== null && formData.salary_max !== null) {
+      if (formData.salary_min > formData.salary_max) {
+        errors.salary_min = 'Minimum salary cannot be greater than maximum salary';
+      }
+    }
+
+    return errors;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newErrors = validateForm(formData);
-    setErrors(newErrors);
-    if (Object.keys(newErrors).length > 0) return;
+    const validationErrors = validateForm(formData);
+    
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
+    setIsLoading(true);
 
     try {
-      setIsLoading(true);
-      const requirements = formData.requirements.split('\n')
+      // Split requirements into array and filter out empty lines
+      const requirementsArray = formData.requirements
+        .split('\n')
         .map(req => req.trim())
-        .filter(req => req.length > 0);
+        .filter(req => req);
 
       const jobData = {
         ...formData,
-        requirements,
-        salary_min: formData.salary_min || null,
-        salary_max: formData.salary_max || null,
+        requirements: requirementsArray,
       };
 
       if (jobId) {
@@ -198,6 +231,19 @@ const JobPostingForm: React.FC = () => {
     }
   };
 
+  // Form section component
+  const FormSection = useCallback(({ title, children, icon }: { title: string; children: React.ReactNode; icon: React.ReactNode }) => (
+    <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+      <div className="flex items-center space-x-3 pb-4 border-b border-gray-100">
+        <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">{icon}</div>
+        <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
+      </div>
+      <div className="pt-4 space-y-4">
+        {children}
+      </div>
+    </div>
+  ), []);
+
   if (isLoading && jobId) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -207,103 +253,202 @@ const JobPostingForm: React.FC = () => {
   }
 
   return (
-    <div className="max-w-3xl mx-auto py-6">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">
-        {jobId ? 'Edit Job Posting' : 'Create Job Posting'}
-      </h1>
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <Input
-          label="Job Title"
-          name="title"
-          value={formData.title}
-          onChange={handleChange}
-          error={errors.title}
-          required
-          placeholder="e.g., Senior Frontend Developer"
-        />
+    <div className="min-h-screen bg-gray-50 pt-24 pb-12">
+      <div className="container mx-auto px-4 max-w-4xl">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          {jobId ? 'Edit Job Posting' : 'Create Job Posting'}
+        </h1>
+        <p className="text-gray-600 mb-8">
+          {jobId ? 'Update your job listing details' : 'Create a new job listing for your company'}
+        </p>
 
-        <TextArea
-          label="Job Description"
-          name="description"
-          value={formData.description}
-          onChange={handleChange}
-          error={errors.description}
-          required
-          placeholder="Describe the responsibilities and requirements..."
-        />
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <FormSection title="Basic Information" icon={<Briefcase size={20} />}>
+            <Input
+              label="Job Title"
+              name="title"
+              value={formData.title}
+              onChange={handleChange}
+              error={errors.title}
+              required
+              placeholder="e.g., Senior Frontend Developer"
+            />
 
-        <Input
-          label="Location"
-          name="location"
-          value={formData.location}
-          onChange={handleChange}
-          error={errors.location}
-          required
-          placeholder="e.g., Berlin, Remote"
-        />
+            <TextArea
+              label="Job Description"
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              error={errors.description}
+              required
+              placeholder="Describe the responsibilities and requirements..."
+            />
 
-        <Select
-          label="Job Type"
-          name="type"
-          value={formData.type}
-          onChange={handleChange}
-          error={!!errors.type}
-          required
-          options={jobTypes}
-        />
+            <Input
+              label="Location"
+              name="location"
+              value={formData.location}
+              onChange={handleChange}
+              error={errors.location}
+              required
+              placeholder="e.g., Berlin, Remote"
+            />
 
-        <div className="grid grid-cols-2 gap-4">
-          <Input
-            label="Minimum Salary"
-            type="number"
-            name="salary_min"
-            value={formData.salary_min || ''}
-            onChange={handleChange}
-            error={errors.salary_min}
-            placeholder="e.g., 50000"
-          />
+            <Select
+              label="Job Type"
+              name="type"
+              value={formData.type}
+              onChange={handleChange}
+              error={!!errors.type}
+              required
+              options={jobTypes}
+            />
+          </FormSection>
 
-          <Input
-            label="Maximum Salary"
-            type="number"
-            name="salary_max"
-            value={formData.salary_max || ''}
-            onChange={handleChange}
-            error={errors.salary_max}
-            placeholder="e.g., 70000"
-          />
-        </div>
+          <FormSection title="Compensation" icon={<DollarSign size={20} />}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input
+                label="Minimum Salary"
+                type="number"
+                name="salary_min"
+                value={formData.salary_min || ''}
+                onChange={handleChange}
+                error={errors.salary_min}
+                placeholder="e.g., 50000"
+              />
 
-        <TextArea
-          label="Requirements"
-          name="requirements"
-          value={formData.requirements}
-          onChange={handleRequirementsChange}
-          error={errors.requirements}
-          required
-          placeholder="Bachelor's degree in Computer Science or related field&#10;5+ years of experience in frontend development&#10;Strong proficiency in React and TypeScript"
-          helpText="Enter each requirement on a new line"
-        />
+              <Input
+                label="Maximum Salary"
+                type="number"
+                name="salary_max"
+                value={formData.salary_max || ''}
+                onChange={handleChange}
+                error={errors.salary_max}
+                placeholder="e.g., 70000"
+              />
+            </div>
+            
+            {/* Benefits section */}
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Benefits
+              </label>
+              <p className="text-sm text-gray-500 mb-3">
+                Add the benefits offered with this position
+              </p>
 
-        <div className="flex justify-end space-x-3">
-          <button
-            type="button"
-            onClick={() => navigate('/dashboard/jobs/manage')}
-            className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            {!isLoading && <Save className="h-4 w-4 mr-2" />}
-            {jobId ? 'Update Job' : 'Create Job'}
-          </button>
-        </div>
-      </form>
+              <div className="flex items-center space-x-2 mb-3">
+                <input
+                  type="text"
+                  className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-gray-900 placeholder-gray-500 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm transition-colors duration-200"
+                  placeholder="Type a benefit and press Enter or Add"
+                  value={newBenefit}
+                  onChange={(e) => setNewBenefit(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && newBenefit.trim()) {
+                      e.preventDefault();
+                      addBenefit();
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={addBenefit}
+                  disabled={!newBenefit.trim()}
+                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Add
+                </button>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {formData.benefits.map((benefit, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-full text-sm font-medium group"
+                  >
+                    <span>{benefit}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeBenefit(index)}
+                      className="ml-1.5 text-indigo-400 hover:text-indigo-600 focus:outline-none"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+
+                {formData.benefits.length === 0 && (
+                  <p className="text-sm text-gray-500 italic">
+                    No benefits added yet. Add some to make your job posting more attractive!
+                  </p>
+                )}
+              </div>
+            </div>
+          </FormSection>
+
+          <FormSection title="Requirements" icon={<FileText size={20} />}>
+            <TextArea
+              label="Requirements"
+              name="requirements"
+              value={formData.requirements}
+              onChange={handleRequirementsChange}
+              error={errors.requirements}
+              required
+              placeholder="Bachelor's degree in Computer Science or related field&#10;5+ years of experience in frontend development&#10;Strong proficiency in React and TypeScript"
+              helpText="Enter each requirement on a new line"
+            />
+            
+            {/* Active status checkbox */}
+            <div className="flex items-center mt-4">
+              <input
+                type="checkbox"
+                id="is_active"
+                name="is_active"
+                checked={formData.is_active}
+                onChange={handleChange}
+                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+              />
+              <label
+                htmlFor="is_active"
+                className="ml-2 block text-sm text-gray-900"
+              >
+                Make this job posting active
+              </label>
+            </div>
+          </FormSection>
+
+          <div className="flex justify-end space-x-3">
+            <button
+              type="button"
+              onClick={() => navigate('/dashboard/jobs/manage')}
+              className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {!isLoading && <Save className="h-4 w-4 mr-2" />}
+              {jobId ? 'Update Job' : 'Create Job'}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };

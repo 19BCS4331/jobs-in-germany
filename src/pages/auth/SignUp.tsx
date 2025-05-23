@@ -3,8 +3,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { signUp, AuthError } from "../../lib/auth";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
-import { Briefcase, User, ArrowLeft, Check } from "lucide-react";
+import { Briefcase, User, ArrowLeft, Check,Eye, EyeOff } from "lucide-react";
 import { supabase } from "../../lib/supabase";
+import { useAuth } from "../../lib/AuthContext";
 
 type UserType = "job_seeker" | "employer";
 
@@ -12,7 +13,10 @@ export default function SignUp() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const { profile } = useAuth();
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [userType, setUserType] = useState<UserType>("job_seeker");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<AuthError | null>(null);
@@ -70,20 +74,25 @@ export default function SignUp() {
 
       // Check if user exists before proceeding
       if (!user) {
+        toast.dismiss(loadingToast);
         toast.error("Failed to create account", {
           duration: 4000,
           position: "bottom-right",
         });
+        setLoading(false);
         return;
       }
 
       // Verify that the profile was created successfully by checking it directly
       let profileCreated = false;
+      let profileData = null;
       let retryCount = 0;
-      const maxRetries = 5;
+      const maxRetries = 10; // Increase max retries
+      const retryDelay = 1500; // Longer delay between retries (1.5 seconds)
 
       while (!profileCreated && retryCount < maxRetries) {
         try {
+          console.log(`Attempt ${retryCount + 1}: Checking for profile...`);
           const { data, error } = await supabase
             .from("profiles")
             .select("*")
@@ -92,13 +101,17 @@ export default function SignUp() {
 
           if (data && !error) {
             profileCreated = true;
+            profileData = data;
+            console.log("Profile found:", data);
           } else {
+            console.log("Profile not found yet, retrying...");
             // Wait before retrying
-            await new Promise((resolve) => setTimeout(resolve, 1000));
+            await new Promise((resolve) => setTimeout(resolve, retryDelay));
             retryCount++;
           }
         } catch (err) {
-          await new Promise((resolve) => setTimeout(resolve, 1000));
+          console.error("Error checking profile:", err);
+          await new Promise((resolve) => setTimeout(resolve, retryDelay));
           retryCount++;
         }
       }
@@ -106,7 +119,7 @@ export default function SignUp() {
       // Dismiss the loading toast
       toast.dismiss(loadingToast);
 
-      if (profileCreated) {
+      if (profileCreated && profileData) {
         toast.success("Account created successfully!", {
           duration: 4000,
           position: "bottom-right",
@@ -121,12 +134,9 @@ export default function SignUp() {
         // Clear the prevention flag
         localStorage.removeItem("preventRedirect");
 
-        // Only redirect if profile was successfully created
-        if (userType === "employer") {
-          navigate("/company/new");
-        } else {
-          navigate("/dashboard");
-        }
+        // Force a complete page reload with the destination in the URL
+        window.location.href =
+          userType === "employer" ? "/company/new" : "/dashboard";
       } else {
         // If profile creation failed or timed out
         toast.error(
@@ -262,6 +272,7 @@ export default function SignUp() {
                 />
               </div>
 
+              {/* Password Field */}
               <div>
                 <label
                   htmlFor="password"
@@ -269,20 +280,35 @@ export default function SignUp() {
                 >
                   Password
                 </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="Create a password"
-                  disabled={loading}
-                />
+                <div className="relative">
+                  <input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="new-password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="block w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="Create a password"
+                    disabled={loading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
               </div>
 
+              {/* Confirm Password Field */}
               <div>
                 <label
                   htmlFor="confirmPassword"
@@ -290,18 +316,32 @@ export default function SignUp() {
                 >
                   Confirm password
                 </label>
-                <input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="Confirm your password"
-                  disabled={loading}
-                />
+                <div className="relative">
+                  <input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    autoComplete="new-password"
+                    required
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="block w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="Confirm your password"
+                    disabled={loading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600"
+                    tabIndex={-1}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
               </div>
 
               {error && (
@@ -367,7 +407,6 @@ export default function SignUp() {
 
         {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-700 to-indigo-900 opacity-90 z-10"></div>
-
 
         <div className="relative z-30">
           <Link to="/" className="text-white text-2xl font-bold">

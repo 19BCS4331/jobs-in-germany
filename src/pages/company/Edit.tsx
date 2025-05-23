@@ -1,42 +1,49 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { updateCompany, getCompany } from '../../lib/api';
-import { useAuth } from '../../lib/AuthContext';
-import { supabase } from '../../lib/supabase';
-import toast from 'react-hot-toast';
-import { FiTrello, FiUsers, FiAward, FiHeart, FiGlobe, FiSave, FiArrowLeft, FiUpload } from 'react-icons/fi';
-import ConfirmDialog from '../../components/ConfirmDialog';
-import Input from '../../components/forms/Input';
-import TextArea from '../../components/forms/TextArea';
-import Select from '../../components/forms/Select';
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { updateCompany, getCompany } from "../../lib/api";
+import { useAuth } from "../../lib/AuthContext";
+import { supabase } from "../../lib/supabase";
+import toast from "react-hot-toast";
+import {
+  FiTrello,
+  FiUsers,
+  FiHeart,
+  FiGlobe,
+  FiSave,
+  FiArrowLeft,
+  FiUpload,
+} from "react-icons/fi";
+import ConfirmDialog from "../../components/ConfirmDialog";
+import Input from "../../components/forms/Input";
+import TextArea from "../../components/forms/TextArea";
+import Select from "../../components/forms/Select";
 
 // Constants
 const INDUSTRIES = [
-  'Technology', 'Healthcare', 'Finance', 'Education', 'Manufacturing',
-  'Retail', 'Hospitality', 'Construction', 'Entertainment', 'Automotive',
-  'Energy', 'Agriculture', 'Transportation', 'Real Estate', 'Consulting'
+  "Technology",
+  "Healthcare",
+  "Finance",
+  "Education",
+  "Manufacturing",
+  "Retail",
+  "Hospitality",
+  "Construction",
+  "Entertainment",
+  "Automotive",
+  "Energy",
+  "Agriculture",
+  "Transportation",
+  "Real Estate",
+  "Consulting",
 ].sort();
 
 const COMPANY_SIZES = [
-  '1-10', '11-50', '51-200', '201-500', '501-1000', '1000+'
-];
-
-const BENEFITS = [
-  { id: 'health', label: 'Health Insurance', icon: '🏥' },
-  { id: 'dental', label: 'Dental Insurance', icon: '🦷' },
-  { id: 'vision', label: 'Vision Insurance', icon: '👓' },
-  { id: 'life', label: 'Life Insurance', icon: '🛡️' },
-  { id: '401k', label: '401(k)', icon: '💰' },
-  { id: 'remote', label: 'Remote Work', icon: '🏠' },
-  { id: 'flexible', label: 'Flexible Hours', icon: '⏰' },
-  { id: 'pto', label: 'Paid Time Off', icon: '✈️' },
-  { id: 'parental', label: 'Parental Leave', icon: '👶' },
-  { id: 'development', label: 'Professional Development', icon: '📚' },
-  { id: 'gym', label: 'Gym Membership', icon: '💪' },
-  { id: 'events', label: 'Company Events', icon: '🎉' },
-  { id: 'stock', label: 'Stock Options', icon: '📈' },
-  { id: 'bonus', label: 'Performance Bonus', icon: '🎯' },
-  { id: 'relocation', label: 'Relocation Assistance', icon: '🚚' }
+  "1-10",
+  "11-50",
+  "51-200",
+  "201-500",
+  "501-1000",
+  "1000+",
 ];
 
 interface ValidationErrors {
@@ -62,42 +69,33 @@ function EditCompany() {
   const { id } = useParams();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [newBenefit, setNewBenefit] = useState("");
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [showConfirm, setShowConfirm] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    website: '',
-    location: '',
-    size: '',
-    industry: '',
-    logo_url: '',
+    name: "",
+    description: "",
+    website: "",
+    location: "",
+    size: "",
+    industry: "",
+    logo_url: "",
     founded_year: new Date().getFullYear(),
-    headquarters: '',
+    headquarters: "",
     benefits: [] as string[],
-    culture: '',
-    mission: '',
-    values: '',
-    funding_stage: '',
-    tech_stack: '',
-    linkedin_url: '',
-    twitter_url: '',
-    facebook_url: ''
+    culture: "",
+    mission: "",
+    values: "",
+    funding_stage: "",
+    tech_stack: "",
+    linkedin_url: "",
+    twitter_url: "",
+    facebook_url: "",
+    contact_person_name: "",
+    contact_person_number: "",
   });
-
-  // Convert benefit label to ID
-  const getBenefitId = (label: string): string => {
-    const benefit = BENEFITS.find(b => b.label === label);
-    return benefit ? benefit.id : '';
-  };
-
-  // Convert benefit ID to label
-  const getBenefitLabel = (id: string): string => {
-    const benefit = BENEFITS.find(b => b.id === id);
-    return benefit ? benefit.label : '';
-  };
 
   useEffect(() => {
     loadCompany();
@@ -108,33 +106,35 @@ function EditCompany() {
     try {
       const companyData = await getCompany(id);
       if (!companyData) {
-        toast.error('Company not found');
-        navigate('/dashboard/companies/manage');
+        toast.error("Company not found");
+        navigate("/dashboard/companies/manage");
         return;
       }
       setFormData({
-        name: companyData.name || '',
-        description: companyData.description || '',
-        website: companyData.website || '',
-        location: companyData.location || '',
-        size: companyData.size || '',
-        industry: companyData.industry || '',
-        logo_url: companyData.logo_url || '',
+        name: companyData.name || "",
+        description: companyData.description || "",
+        website: companyData.website || "",
+        location: companyData.location || "",
+        size: companyData.size || "",
+        industry: companyData.industry || "",
+        logo_url: companyData.logo_url || "",
         founded_year: companyData.founded_year || new Date().getFullYear(),
-        headquarters: companyData.headquarters || '',
-        benefits: (companyData.benefits || []).map(getBenefitId).filter(Boolean),
-        culture: companyData.culture || '',
-        mission: companyData.mission || '',
-        values: companyData.values || '',
-        funding_stage: companyData.funding_stage || '',
-        tech_stack: companyData.tech_stack || '',
-        linkedin_url: companyData.linkedin_url || '',
-        twitter_url: companyData.twitter_url || '',
-        facebook_url: companyData.facebook_url || ''
+        headquarters: companyData.headquarters || "",
+        benefits: companyData.benefits || [],
+        culture: companyData.culture || "",
+        mission: companyData.mission || "",
+        values: companyData.values || "",
+        funding_stage: companyData.funding_stage || "",
+        tech_stack: companyData.tech_stack || "",
+        linkedin_url: companyData.linkedin_url || "",
+        twitter_url: companyData.twitter_url || "",
+        facebook_url: companyData.facebook_url || "",
+        contact_person_name: companyData.contact_person_name || "",
+        contact_person_number: companyData.contact_person_number || "",
       });
     } catch (error) {
-      console.error('Error loading company:', error);
-      toast.error('Failed to load company');
+      console.error("Error loading company:", error);
+      toast.error("Failed to load company");
     } finally {
       setLoading(false);
     }
@@ -145,64 +145,66 @@ function EditCompany() {
 
     // Required fields validation
     if (!formData.name.trim()) {
-      newErrors.name = 'Company name is required';
+      newErrors.name = "Company name is required";
     }
     if (!formData.description.trim()) {
-      newErrors.description = 'Company description is required';
+      newErrors.description = "Company description is required";
     }
     if (!formData.location.trim()) {
-      newErrors.location = 'Location is required';
+      newErrors.location = "Location is required";
     }
     if (!formData.industry) {
-      newErrors.industry = 'Industry is required';
+      newErrors.industry = "Industry is required";
     }
     if (!formData.size) {
-      newErrors.size = 'Company size is required';
+      newErrors.size = "Company size is required";
     }
 
     // URL validations
     if (formData.website && !/^https?:\/\/.+/.test(formData.website)) {
-      newErrors.website = 'Please enter a valid URL starting with http:// or https://';
+      newErrors.website =
+        "Please enter a valid URL starting with http:// or https://";
     }
-    if (formData.linkedin_url && !/^https?:\/\/.+/.test(formData.linkedin_url)) {
-      newErrors.linkedin_url = 'Please enter a valid LinkedIn URL';
+    if (
+      formData.linkedin_url &&
+      !/^https?:\/\/.+/.test(formData.linkedin_url)
+    ) {
+      newErrors.linkedin_url = "Please enter a valid LinkedIn URL";
     }
     if (formData.twitter_url && !/^https?:\/\/.+/.test(formData.twitter_url)) {
-      newErrors.twitter_url = 'Please enter a valid Twitter URL';
+      newErrors.twitter_url = "Please enter a valid Twitter URL";
     }
-    if (formData.facebook_url && !/^https?:\/\/.+/.test(formData.facebook_url)) {
-      newErrors.facebook_url = 'Please enter a valid Facebook URL';
+    if (
+      formData.facebook_url &&
+      !/^https?:\/\/.+/.test(formData.facebook_url)
+    ) {
+      newErrors.facebook_url = "Please enter a valid Facebook URL";
     }
 
     // Founded year validation
     const currentYear = new Date().getFullYear();
     if (formData.founded_year > currentYear) {
-      newErrors.founded_year = 'Founded year cannot be in the future';
+      newErrors.founded_year = "Founded year cannot be in the future";
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
     // Clear error when field is edited
     if (errors[name]) {
-      setErrors(prev => {
+      setErrors((prev) => {
         const { [name]: _, ...rest } = prev;
         return rest;
       });
     }
-  };
-
-  const handleBenefitToggle = (benefitId: string) => {
-    setFormData(prev => ({
-      ...prev,
-      benefits: prev.benefits.includes(benefitId)
-        ? prev.benefits.filter(b => b !== benefitId)
-        : [...prev.benefits, benefitId]
-    }));
   };
 
   const handleSaveChanges = async () => {
@@ -212,13 +214,13 @@ function EditCompany() {
       setLoading(true);
       await updateCompany(id, {
         ...formData,
-        benefits: formData.benefits.map(getBenefitLabel)
+        benefits: formData.benefits,
       });
-      toast.success('Company updated successfully');
-      navigate('/dashboard/companies/manage');
+      toast.success("Company updated successfully");
+      navigate("/dashboard/companies/manage");
     } catch (error) {
-      console.error('Error updating company:', error);
-      toast.error('Failed to update company');
+      console.error("Error updating company:", error);
+      toast.error("Failed to update company");
     } finally {
       setLoading(false);
       setShowConfirm(false);
@@ -235,14 +237,14 @@ function EditCompany() {
     if (!file) return;
 
     // Validate file type
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please select an image file');
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('File size should be less than 5MB');
+      toast.error("File size should be less than 5MB");
       return;
     }
 
@@ -250,16 +252,18 @@ function EditCompany() {
       setUploadingLogo(true);
 
       // Generate a unique file name
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${Date.now()}-${Math.random()
+        .toString(36)
+        .substring(2)}.${fileExt}`;
       const filePath = `company-logos/${fileName}`;
 
       // Upload to Supabase Storage
       const { error: uploadError, data } = await supabase.storage
-        .from('company-assets')
+        .from("company-assets")
         .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false
+          cacheControl: "3600",
+          upsert: false,
         });
 
       if (uploadError) {
@@ -267,15 +271,15 @@ function EditCompany() {
       }
 
       // Get the public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('company-assets')
-        .getPublicUrl(filePath);
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("company-assets").getPublicUrl(filePath);
 
-      setFormData(prev => ({ ...prev, logo_url: publicUrl }));
-      toast.success('Logo uploaded successfully');
+      setFormData((prev) => ({ ...prev, logo_url: publicUrl }));
+      toast.success("Logo uploaded successfully");
     } catch (error) {
-      console.error('Error uploading logo:', error);
-      toast.error('Failed to upload logo');
+      console.error("Error uploading logo:", error);
+      toast.error("Failed to upload logo");
     } finally {
       setUploadingLogo(false);
     }
@@ -287,28 +291,47 @@ function EditCompany() {
     try {
       // Extract the file path from the URL
       const url = new URL(formData.logo_url);
-      const pathParts = url.pathname.split('/');
-      const filePath = pathParts.slice(pathParts.indexOf('company-logos')).join('/');
+      const pathParts = url.pathname.split("/");
+      const filePath = pathParts
+        .slice(pathParts.indexOf("company-logos"))
+        .join("/");
 
       // Delete from Supabase Storage
       const { error } = await supabase.storage
-        .from('company-assets')
+        .from("company-assets")
         .remove([filePath]);
 
       if (error) {
         throw error;
       }
 
-      setFormData(prev => ({ ...prev, logo_url: '' }));
-      toast.success('Logo removed successfully');
+      setFormData((prev) => ({ ...prev, logo_url: "" }));
+      toast.success("Logo removed successfully");
     } catch (error) {
-      console.error('Error removing logo:', error);
-      toast.error('Failed to remove logo');
+      console.error("Error removing logo:", error);
+      toast.error("Failed to remove logo");
     }
   };
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
+  };
+
+  const addBenefit = () => {
+    if (newBenefit.trim()) {
+      setFormData((prev) => ({
+        ...prev,
+        benefits: [...prev.benefits, newBenefit.trim()],
+      }));
+      setNewBenefit("");
+    }
+  };
+
+  const removeBenefit = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      benefits: prev.benefits.filter((_, i) => i !== index),
+    }));
   };
 
   if (loading) {
@@ -324,12 +347,14 @@ function EditCompany() {
       <div className="flex justify-between items-center mb-8">
         <div>
           <button
-            onClick={() => navigate('/dashboard/companies/manage')}
+            onClick={() => navigate("/dashboard/companies/manage")}
             className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700"
           >
             <FiArrowLeft className="mr-2" /> Back to Companies
           </button>
-          <h1 className="mt-2 text-2xl font-bold text-gray-900">Edit Company</h1>
+          <h1 className="mt-2 text-2xl font-bold text-gray-900">
+            Edit Company
+          </h1>
         </div>
         <button
           onClick={() => setShowConfirm(true)}
@@ -347,9 +372,9 @@ function EditCompany() {
               <div className="flex-shrink-0">
                 <div className="h-24 w-24 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden border-2 border-gray-200">
                   {formData.logo_url ? (
-                    <img 
-                      src={formData.logo_url} 
-                      alt={formData.name} 
+                    <img
+                      src={formData.logo_url}
+                      alt={formData.name}
                       className="h-full w-full object-cover"
                     />
                   ) : (
@@ -360,7 +385,9 @@ function EditCompany() {
               <div className="flex-1">
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Company Logo</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Company Logo
+                    </label>
                     <p className="mt-1 text-sm text-gray-500">
                       Upload a high-quality logo to make your company stand out
                     </p>
@@ -380,7 +407,7 @@ function EditCompany() {
                       disabled={uploadingLogo}
                     >
                       <FiUpload className="mr-2 h-4 w-4" />
-                      {uploadingLogo ? 'Uploading...' : 'Upload Logo'}
+                      {uploadingLogo ? "Uploading..." : "Upload Logo"}
                     </button>
                     {formData.logo_url && (
                       <button
@@ -441,9 +468,9 @@ function EditCompany() {
               value={formData.industry}
               onChange={handleChange}
               error={!!errors.industry}
-              options={INDUSTRIES.map(industry => ({
+              options={INDUSTRIES.map((industry) => ({
                 value: industry,
-                label: industry
+                label: industry,
               }))}
             />
             <Select
@@ -453,9 +480,9 @@ function EditCompany() {
               value={formData.size}
               onChange={handleChange}
               error={!!errors.size}
-              options={COMPANY_SIZES.map(size => ({
+              options={COMPANY_SIZES.map((size) => ({
                 value: size,
-                label: size
+                label: size,
               }))}
             />
             <Input
@@ -466,6 +493,22 @@ function EditCompany() {
               value={formData.founded_year}
               onChange={handleChange}
               error={errors.founded_year}
+            />
+            <Input
+              label="Contact Person Name"
+              id="contact_person_name"
+              name="contact_person_name"
+              value={formData.contact_person_name}
+              onChange={handleChange}
+              error={errors.contact_person_name}
+            />
+            <Input
+              label="Contact Person Number"
+              id="contact_person_number"
+              name="contact_person_number"
+              value={formData.contact_person_number}
+              onChange={handleChange}
+              error={errors.contact_person_number}
             />
           </div>
         </FormSection>
@@ -482,53 +525,84 @@ function EditCompany() {
               required
               rows={4}
             />
-            <TextArea
-              label="Mission"
-              id="mission"
-              name="mission"
-              value={formData.mission}
-              onChange={handleChange}
-              rows={3}
-            />
-            <TextArea
-              label="Values"
-              id="values"
-              name="values"
-              value={formData.values}
-              onChange={handleChange}
-              rows={3}
-            />
-            <TextArea
-              label="Culture"
-              id="culture"
-              name="culture"
-              value={formData.culture}
-              onChange={handleChange}
-              rows={3}
-            />
           </div>
         </FormSection>
 
-        <FormSection title="Benefits" icon={<FiAward size={20} />}>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {BENEFITS.map(benefit => (
-              <div
-                key={benefit.id}
-                className={`flex items-center p-4 rounded-lg border cursor-pointer transition-colors ${
-                  formData.benefits.includes(benefit.id)
-                    ? 'border-indigo-500 bg-indigo-50'
-                    : 'border-gray-200 hover:border-indigo-300'
-                }`}
-                onClick={() => handleBenefitToggle(benefit.id)}
-              >
-                <span className="text-2xl mr-3">{benefit.icon}</span>
-                <span className="text-sm font-medium text-gray-900">{benefit.label}</span>
+        <FormSection title="Benefits & Perks" icon={<FiHeart size={20} />}>
+          <div className="space-y-6">
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Company Benefits
+              </label>
+              <p className="text-sm text-gray-500 mb-3">
+                Add the benefits your company offers to attract top talent
+              </p>
+
+              <div className="flex items-center space-x-2 mb-3">
+                <input
+                  type="text"
+                  className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-blue-500 sm:text-sm transition-colors duration-200"
+                  placeholder="Type a benefit and press Enter or Add"
+                  value={newBenefit}
+                  onChange={(e) => setNewBenefit(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && newBenefit.trim()) {
+                      e.preventDefault();
+                      addBenefit();
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={addBenefit}
+                  disabled={!newBenefit.trim()}
+                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Add
+                </button>
               </div>
-            ))}
+            </div>
+
+            {/* Benefits tags display */}
+            <div className="flex flex-wrap gap-2">
+              {formData.benefits.map((benefit, index) => (
+                <div
+                  key={index}
+                  className="flex items-center bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full text-sm font-medium group"
+                >
+                  <span>{benefit}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeBenefit(index)}
+                    className="ml-1.5 text-blue-400 hover:text-blue-600 focus:outline-none"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-4 w-4"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+
+              {formData.benefits.length === 0 && (
+                <p className="text-sm text-gray-500 italic">
+                  No benefits added yet. Add some to make your company more
+                  attractive!
+                </p>
+              )}
+            </div>
           </div>
         </FormSection>
 
-        <FormSection title="Technical Details" icon={<FiHeart size={20} />}>
+        {/* <FormSection title="Technical Details" icon={<FiHeart size={20} />}>
           <div className="space-y-6">
             <TextArea
               label="Tech Stack"
@@ -548,7 +622,7 @@ function EditCompany() {
               placeholder="e.g., Seed, Series A, Series B"
             />
           </div>
-        </FormSection>
+        </FormSection> */}
 
         <FormSection title="Social Media" icon={<FiGlobe size={20} />}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

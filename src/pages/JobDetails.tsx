@@ -1,10 +1,18 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Icons } from '../components/Icons';
-import { getJob, type Job, applyToJob, saveJob, unsaveJob, getSavedJobId, checkIfJobApplied } from '../lib/api';
-import { useAuth } from '../lib/AuthContext';
-import { useSavedJobs } from '../contexts/SavedJobsContext';
-import { toast } from 'react-hot-toast';
+import React, { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { Icons } from "../components/Icons";
+import {
+  getJob,
+  type Job,
+  applyToJob,
+  saveJob,
+  unsaveJob,
+  getSavedJobId,
+  checkIfJobApplied,
+} from "../lib/api";
+import { useAuth } from "../lib/AuthContext";
+import { useSavedJobs } from "../contexts/SavedJobsContext";
+import { toast } from "react-hot-toast";
 
 interface ApplicationModalProps {
   job: Job;
@@ -13,8 +21,13 @@ interface ApplicationModalProps {
   onSubmit: (coverLetter: string) => Promise<void>;
 }
 
-function ApplicationModal({ job, isOpen, onClose, onSubmit }: ApplicationModalProps) {
-  const [coverLetter, setCoverLetter] = useState('');
+function ApplicationModal({
+  job,
+  isOpen,
+  onClose,
+  onSubmit,
+}: ApplicationModalProps) {
+  const [coverLetter, setCoverLetter] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isOpen) return null;
@@ -25,9 +38,9 @@ function ApplicationModal({ job, isOpen, onClose, onSubmit }: ApplicationModalPr
     try {
       await onSubmit(coverLetter);
       onClose();
-      toast.success('Application submitted successfully!');
+      toast.success("Application submitted successfully!");
     } catch (error) {
-      toast.error('Failed to submit application. Please try again.');
+      toast.error("Failed to submit application. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -38,7 +51,10 @@ function ApplicationModal({ job, isOpen, onClose, onSubmit }: ApplicationModalPr
       <div className="bg-white rounded-xl p-6 max-w-2xl w-full mx-4">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">Apply to {job.title}</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
+          >
             <Icons.X className="w-5 h-5" />
           </button>
         </div>
@@ -69,7 +85,7 @@ function ApplicationModal({ job, isOpen, onClose, onSubmit }: ApplicationModalPr
               disabled={isSubmitting}
               className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
             >
-              {isSubmitting ? 'Submitting...' : 'Submit Application'}
+              {isSubmitting ? "Submitting..." : "Submit Application"}
             </button>
           </div>
         </form>
@@ -99,15 +115,15 @@ function JobDetails() {
       setLoading(true);
       const jobData = await getJob(id!);
       setJob(jobData);
-      
+
       if (user) {
         const hasAlreadyApplied = await checkIfJobApplied(id!);
         setHasApplied(hasAlreadyApplied);
       }
     } catch (error) {
-      console.error('Error loading job:', error);
-      toast.error('Failed to load job details');
-      navigate('/jobs');
+      console.error("Error loading job:", error);
+      toast.error("Failed to load job details");
+      navigate("/jobs");
     } finally {
       setLoading(false);
     }
@@ -116,7 +132,7 @@ function JobDetails() {
   const handleSaveJob = async (e: React.MouseEvent) => {
     e.preventDefault();
     if (!user || !job) {
-      navigate('/signin');
+      navigate("/signin");
       return;
     }
 
@@ -129,16 +145,20 @@ function JobDetails() {
         if (savedJobId) {
           await unsaveJob(savedJobId);
           removeSavedJob(job.id);
-          toast.success('Job removed from saved jobs');
+          toast.success("Job removed from saved jobs");
         }
       } else {
         await saveJob(user.id, job.id);
         addSavedJob(job.id);
-        toast.success('Job saved successfully');
+        toast.success("Job saved successfully");
       }
     } catch (error) {
-      console.error('Error saving job:', error);
-      toast.error(checkIfJobIsSaved(job.id) ? 'Failed to remove job' : 'Failed to save job');
+      console.error("Error saving job:", error);
+      toast.error(
+        checkIfJobIsSaved(job.id)
+          ? "Failed to remove job"
+          : "Failed to save job"
+      );
     } finally {
       setIsSaving(false);
     }
@@ -146,7 +166,7 @@ function JobDetails() {
 
   const handleApply = () => {
     if (!user) {
-      navigate('/signin');
+      navigate("/signin");
       return;
     }
     setShowApplicationModal(true);
@@ -177,7 +197,7 @@ function JobDetails() {
     <div className="min-h-screen bg-gray-50 pt-16">
       <div className="max-w-5xl mx-auto px-4 py-8 mb-5">
         <button
-          onClick={() => navigate('/jobs')}
+          onClick={() => navigate("/jobs")}
           className="mb-6 inline-flex items-center text-gray-600 hover:text-gray-900"
         >
           <Icons.ArrowLeft className="w-4 h-4 mr-2" />
@@ -190,18 +210,33 @@ function JobDetails() {
             <div className="flex items-start justify-between">
               <div className="flex items-start space-x-4">
                 {job.company ? (
-                  <img
-                    src={job.company.logo_url || '/company-placeholder.png'}
-                    alt={`${job.company.name} logo`}
-                    className="h-16 w-16 rounded-lg object-cover"
-                  />
+                  job.company.logo_url ? (
+                    <img
+                      src={job.company.logo_url}
+                      alt={`${job.company.name} logo`}
+                      className="h-16 w-16 rounded-lg object-cover"
+                      onError={(e) => {
+                        // If the image fails to load, show the icon instead
+                        e.currentTarget.style.display = "none";
+                        e.currentTarget.nextElementSibling?.classList.remove(
+                          "hidden"
+                        );
+                      }}
+                    />
+                  ) : (
+                    <div className="h-16 w-16 rounded-lg bg-gray-100 flex items-center justify-center">
+                      <Icons.Building2 className="w-8 h-8 text-gray-400" />
+                    </div>
+                  )
                 ) : (
                   <div className="h-16 w-16 rounded-lg bg-gray-100 flex items-center justify-center">
                     <Icons.Building2 className="w-8 h-8 text-gray-400" />
                   </div>
                 )}
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">{job.title}</h1>
+                  <h1 className="text-2xl font-bold text-gray-900">
+                    {job.title}
+                  </h1>
                   <div className="mt-4 flex flex-wrap gap-4">
                     <div className="flex items-center text-gray-500">
                       <Icons.Building2 className="w-5 h-5 mr-1.5" />
@@ -211,7 +246,7 @@ function JobDetails() {
                       <Icons.MapPin className="w-5 h-5 mr-1.5" />
                       {job.location}
                     </div>
-                    {(job.salary_min || job.salary_max) && (
+                    {(job.salary_min || job.salary_max) ? (
                       <div className="flex items-center text-gray-500">
                         <Icons.Euro className="w-5 h-5 mr-1.5" />
                         {job.salary_min && job.salary_max
@@ -220,6 +255,11 @@ function JobDetails() {
                           ? `From ${job.salary_min.toLocaleString()}€`
                           : `Up to ${job.salary_max?.toLocaleString()}€`}
                         <span className="ml-1">/ year</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center text-gray-500">
+                        <Icons.Euro className="w-5 h-5 mr-1.5" />
+                        Salary not specified
                       </div>
                     )}
                     <div className="flex items-center text-gray-500">
@@ -234,13 +274,21 @@ function JobDetails() {
                   onClick={handleSaveJob}
                   disabled={isSaving}
                   className={`p-2.5 rounded-lg transition ${
-                    checkIfJobIsSaved(job?.id || '')
-                      ? 'text-blue-600 hover:bg-blue-50'
-                      : 'text-gray-400 hover:bg-gray-50'
+                    checkIfJobIsSaved(job?.id || "")
+                      ? "text-blue-600 hover:bg-blue-50"
+                      : "text-gray-400 hover:bg-gray-50"
                   }`}
-                  title={checkIfJobIsSaved(job?.id || '') ? 'Remove from saved jobs' : 'Save job'}
+                  title={
+                    checkIfJobIsSaved(job?.id || "")
+                      ? "Remove from saved jobs"
+                      : "Save job"
+                  }
                 >
-                  <Icons.Bookmark className={`w-6 h-6 ${checkIfJobIsSaved(job?.id || '') ? 'fill-current' : ''}`} />
+                  <Icons.Bookmark
+                    className={`w-6 h-6 ${
+                      checkIfJobIsSaved(job?.id || "") ? "fill-current" : ""
+                    }`}
+                  />
                 </button>
                 {hasApplied ? (
                   <button
@@ -262,11 +310,78 @@ function JobDetails() {
             </div>
           </div>
 
+          {/* Contact Information */}
+          <div className="bg-white p-6 rounded-xl shadow-sm">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+              Contact Information
+            </h2>
+
+            <div className="space-y-4">
+              {job.company?.contact_person_name && (
+                <div className="flex items-start">
+                  <div className="flex-shrink-0 mt-1">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 text-indigo-600"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm font-medium text-gray-900">
+                      Contact Person
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      {job.company.contact_person_name}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {job.company?.contact_person_number && (
+                <div className="flex items-start">
+                  <div className="flex-shrink-0 mt-1">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 text-indigo-600"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm font-medium text-gray-900">
+                      Phone Number
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      {job.company.contact_person_number}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {!job.company?.contact_person_name &&
+                !job.company?.contact_person_number && (
+                  <p className="text-sm text-gray-500 italic">
+                    No contact information available
+                  </p>
+                )}
+            </div>
+          </div>
           {/* Job Description */}
           <div className="bg-white p-6 rounded-xl shadow-sm">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Job Description</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+              Job Description
+            </h2>
             <div className="prose max-w-none">
-              {job.description.split('\n').map((paragraph, index) => (
+              {job.description.split("\n").map((paragraph, index) => (
                 <p key={index} className="mb-4 text-gray-600">
                   {paragraph}
                 </p>
@@ -277,12 +392,48 @@ function JobDetails() {
           {/* Requirements */}
           {job.requirements?.length > 0 && (
             <div className="bg-white p-6 rounded-xl shadow-sm">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Requirements</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                Requirements
+              </h2>
               <ul className="space-y-3">
                 {job.requirements.map((requirement, index) => (
                   <li key={index} className="flex items-start">
                     <span className="inline-block w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3"></span>
                     <span className="text-gray-600">{requirement}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Job Benefits */}
+          {job.benefits && job.benefits.length > 0 && (
+            <div className="bg-white p-6 rounded-xl shadow-sm">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                Job Benefits
+              </h2>
+              <ul className="space-y-3">
+                {job.benefits?.map((benefit, index) => (
+                  <li key={index} className="flex items-start">
+                    <span className="inline-block w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3"></span>
+                    <span className="text-gray-600">{benefit}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Company Benefits */}
+        {job.company?.benefits && job.company?.benefits.length > 0 && (
+            <div className="bg-white p-6 rounded-xl shadow-sm">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                Company Benefits
+              </h2>
+              <ul className="space-y-3">
+                {job.company?.benefits?.map((benefit, index) => (
+                  <li key={index} className="flex items-start">
+                    <span className="inline-block w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3"></span>
+                    <span className="text-gray-600">{benefit}</span>
                   </li>
                 ))}
               </ul>

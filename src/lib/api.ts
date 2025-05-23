@@ -24,10 +24,12 @@ export interface Company {
   linkedin_url?: string | null;
   twitter_url?: string | null;
   facebook_url?: string | null;
+  contact_person_name?: string | null;
+  contact_person_number?: string | null;
 }
 
 // Minimal company info returned in lists
-export type CompanyBasic = Pick<Company, 'id' | 'name' | 'logo_url'>;
+export type CompanyBasic = Pick<Company, 'id' | 'name' | 'logo_url' | 'contact_person_name' | 'contact_person_number' | 'benefits'>;
 
 export interface Job {
   id: string;
@@ -42,6 +44,8 @@ export interface Job {
   created_at?: string;
   company?: CompanyBasic | null;
   applications_count?: number | null;
+  is_active?: boolean;
+  benefits?: string[] | null;
 }
 
 export interface JobWithFullCompany extends Omit<Job, 'company'> {
@@ -155,10 +159,14 @@ interface SupabaseApplicationWithJob extends Omit<Application, 'job' | 'user'> {
     company_id: string;
     salary_min?: number;
     salary_max?: number;
+    benefits?: string[] | null;
     companies?: {
       id: string;
       name: string;
       logo_url: string | null;
+      contact_person_name: string | null;
+      contact_person_number: string | null;
+      benefits: string[] | null;
     } | null;
   } | null;
 }
@@ -176,7 +184,10 @@ function transformJob(job: any): Job {
     company: companyData ? {
       id: companyData.id,
       name: companyData.name,
-      logo_url: companyData.logo_url
+      logo_url: companyData.logo_url,
+      contact_person_name: companyData.contact_person_name,
+      contact_person_number: companyData.contact_person_number,
+      benefits: companyData.benefits
     } : null
   };
 }
@@ -209,10 +220,14 @@ function transformApplicationWithJob(app: SupabaseApplicationWithJob): Applicati
       company_id: jobs.company_id,
       salary_min: jobs.salary_min || null,
       salary_max: jobs.salary_max || null,
+      benefits: jobs.benefits || null,
       company: jobs.companies ? {
         id: jobs.companies.id,
         name: jobs.companies.name,
-        logo_url: jobs.companies.logo_url
+        logo_url: jobs.companies.logo_url,
+        contact_person_name: jobs.companies.contact_person_name,
+        contact_person_number: jobs.companies.contact_person_number,
+        benefits: jobs.companies.benefits
       } : null
     } : null
   };
@@ -267,7 +282,9 @@ export async function getCompany(id: string): Promise<Company | null> {
       tech_stack,
       linkedin_url,
       twitter_url,
-      facebook_url
+      facebook_url,
+      contact_person_name,
+      contact_person_number
     `)
     .eq('id', id)
     .single();
@@ -305,7 +322,9 @@ export async function getCompanyByOwner(userId: string): Promise<Company | null>
       tech_stack,
       linkedin_url,
       twitter_url,
-      facebook_url
+      facebook_url,
+      contact_person_name,
+      contact_person_number
     `)
     .eq('owner_id', userId)
     .single();
@@ -344,7 +363,9 @@ export async function createCompany(company: Omit<Company, 'id' | 'created_at'>)
       tech_stack,
       linkedin_url,
       twitter_url,
-      facebook_url
+      facebook_url,
+      contact_person_name,
+      contact_person_number
     `)
     .single();
 
@@ -378,6 +399,8 @@ export async function updateCompany(id: string, company: Partial<Omit<Company, '
       linkedin_url: company.linkedin_url,
       twitter_url: company.twitter_url,
       facebook_url: company.facebook_url,
+      contact_person_name: company.contact_person_name,
+      contact_person_number: company.contact_person_number,
       owner_id: company.owner_id
     })
     .eq('id', id)
@@ -402,7 +425,9 @@ export async function updateCompany(id: string, company: Partial<Omit<Company, '
       tech_stack,
       linkedin_url,
       twitter_url,
-      facebook_url
+      facebook_url,
+      contact_person_name,
+      contact_person_number
     `)
     .single();
 
@@ -446,6 +471,9 @@ export async function getJobs(filters?: {
   type?: Job['type'];
   salary_min?: number;
   salary_max?: number;
+  is_active?: boolean;
+  benefits?: string[];
+
 }): Promise<Job[]> {
   try {
     let query = supabase
@@ -455,7 +483,10 @@ export async function getJobs(filters?: {
         companies:companies!company_id (
           id,
           name,
-          logo_url
+          logo_url,
+          contact_person_name,
+          contact_person_number,
+          benefits
         )
       `);
 
@@ -506,7 +537,10 @@ export async function getJob(id: string): Promise<Job | null> {
         companies:companies!company_id (
           id,
           name,
-          logo_url
+          logo_url,
+          contact_person_name,
+          contact_person_number,
+          benefits
         )
       `)
       .eq('id', id)
@@ -537,7 +571,10 @@ export async function getJobsByCompany(companyId: string): Promise<Job[]> {
       companies:companies!company_id (
         id,
         name,
-        logo_url
+        logo_url,
+        contact_person_name,
+        contact_person_number,
+        benefits
       ),
       applications_count:job_applications(count)
     `)
@@ -564,7 +601,10 @@ export async function createJob(job: Omit<Job, 'id' | 'created_at' | 'company'>)
       companies:companies!company_id (
         id,
         name,
-        logo_url
+        logo_url,
+        contact_person_name,
+        contact_person_number,
+        benefits
       )
     `)
     .single();
@@ -587,7 +627,10 @@ export async function updateJob(id: string, job: Partial<Omit<Job, 'id' | 'creat
       companies:companies!company_id (
         id,
         name,
-        logo_url
+        logo_url,
+        contact_person_name,
+        contact_person_number,
+        benefits
       )
     `)
     .single();
