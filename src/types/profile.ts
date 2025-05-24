@@ -10,6 +10,7 @@ export interface Profile {
   last_name: string;
   phone?: string;
   avatar_url?: string;
+  location?: string;
   user_type: 'employer' | 'job_seeker';
 
   // Job seeker specific fields

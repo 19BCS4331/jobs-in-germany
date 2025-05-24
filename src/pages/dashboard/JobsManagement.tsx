@@ -162,16 +162,16 @@ const JobsManagement: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pt-5 md:pt-0">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-col md:flex-row">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Jobs Management</h1>
           <p className="mt-1 text-sm text-gray-500">
             Create and manage your job postings
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 mt-4 md:mt-0">
           {showDeleted ? (
             <button
               onClick={handleShowActiveJobs}
@@ -210,38 +210,95 @@ const JobsManagement: React.FC = () => {
 
       {/* Jobs List */}
       <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-        <div className="min-w-full divide-y divide-gray-200">
-          {/* Table Header */}
-          <div className="bg-gray-50 px-6 py-3 grid grid-cols-12 gap-4">
-            <div className="col-span-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Title And Company
-            </div>
-            <div className="col-span-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Location
-            </div>
-            <div className="col-span-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Type
-            </div>
-            <div className="col-span-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Salary Range
-            </div>
-            <div className="col-span-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Applications
-            </div>
-            <div className="col-span-1 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Actions
-            </div>
+        {/* Desktop Table Header - Hidden on mobile */}
+        <div className="hidden md:grid bg-gray-50 px-6 py-3 grid-cols-12 gap-4">
+          <div className="col-span-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Title And Company
           </div>
+          <div className="col-span-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Location
+          </div>
+          <div className="col-span-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Type
+          </div>
+          <div className="col-span-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Salary Range
+          </div>
+          <div className="col-span-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Applications
+          </div>
+          <div className="col-span-1 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Actions
+          </div>
+        </div>
 
-          {/* Table Body */}
-          <div className="divide-y divide-gray-200">
-            {showDeleted ? (
-              <div>
-                {deletedJobs.map((job) => (
-                  <div
-                    key={job.id}
-                    className="px-6 py-4 grid grid-cols-12 gap-4 hover:bg-gray-50"
-                  >
+        {/* Table Body */}
+        <div className="divide-y divide-gray-200">
+          {showDeleted ? (
+            <div>
+              {deletedJobs.map((job) => (
+                <div key={job.id} className="px-4 py-4 hover:bg-gray-50">
+                  {/* Mobile Card Layout */}
+                  <div className="md:hidden">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {job.title}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {job.company?.name || "Company Name Not Available"}
+                        </div>
+                      </div>
+                      <div className="flex space-x-2">
+                        {isRestoring ? (
+                          <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+                        ) : (
+                          <button
+                            onClick={() => handleRestoreJob(job.id)}
+                            className="text-green-600 hover:text-green-900"
+                          >
+                            <RefreshCw className="h-5 w-5" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs mt-2">
+                      <div>
+                        <span className="font-medium text-gray-500">
+                          Location:
+                        </span>
+                        <span className="ml-1 text-gray-900">
+                          {job.location}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-500">Type:</span>
+                        <span className="ml-1 text-gray-900">{job.type}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-500">
+                          Salary:
+                        </span>
+                        <span className="ml-1 text-gray-900">
+                          {job.salary_min && job.salary_max
+                            ? `€${job.salary_min.toLocaleString()} - €${job.salary_max.toLocaleString()}`
+                            : "Not specified"}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-500">
+                          Applications:
+                        </span>
+                        <span className="ml-1 text-gray-900">
+                          {job.applications_count || 0}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Desktop Table Layout */}
+                  <div className="hidden md:grid md:grid-cols-12 md:gap-4 md:items-center">
                     <div className="col-span-4">
                       <div className="text-sm font-medium text-gray-900">
                         {job.title}
@@ -291,15 +348,93 @@ const JobsManagement: React.FC = () => {
                       )}
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div>
-                {jobs.map((job) => (
-                  <div
-                    key={job.id}
-                    className="px-6 py-4 grid grid-cols-12 gap-4 hover:bg-gray-50"
-                  >
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div>
+              {jobs.map((job) => (
+                <div key={job.id} className="px-4 py-4 hover:bg-gray-50">
+                  {/* Mobile Card Layout */}
+                  <div className="md:hidden">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {job.title}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {job.company?.name || "Company Name Not Available"}
+                        </div>
+                      </div>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => handleViewJob(job)}
+                          className="text-indigo-600 hover:text-indigo-900"
+                        >
+                          <Eye className="h-5 w-5" />
+                        </button>
+                        <button
+                          onClick={() => handleEditJob(job)}
+                          className="text-indigo-600 hover:text-indigo-900"
+                        >
+                          <PencilIcon className="h-5 w-5" />
+                        </button>
+                        {isDeleting ? (
+                          <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+                        ) : (
+                          <button
+                            onClick={() => handleDeleteJob(job.id)}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            <TrashIcon className="h-5 w-5" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs mt-2">
+                      <div>
+                        <span className="font-medium text-gray-500">
+                          Location:
+                        </span>
+                        <span className="ml-1 text-gray-900">
+                          {job.location}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-500">Type:</span>
+                        <span className="ml-1 text-gray-900">{job.type}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-500">
+                          Salary:
+                        </span>
+                        <span className="ml-1 text-gray-900">
+                          {job.salary_min && job.salary_max
+                            ? `€${job.salary_min.toLocaleString()} - €${job.salary_max.toLocaleString()}`
+                            : "Not specified"}
+                        </span>
+                      </div>
+                      <div>
+                        <button
+                          onClick={() =>
+                            navigate(
+                              `/dashboard/applications/manage?jobId=${job.id}`
+                            )
+                          }
+                          className="inline-flex items-center text-xs text-indigo-600"
+                        >
+                          <Users className="h-3 w-3 mr-1" />
+                          <span>
+                            {job.applications_count || 0} Applications
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Desktop Table Layout */}
+                  <div className="hidden md:grid md:grid-cols-12 md:gap-4 md:items-center">
                     <div className="col-span-4">
                       <div className="text-sm font-medium text-gray-900">
                         {job.title}
@@ -361,10 +496,10 @@ const JobsManagement: React.FC = () => {
                       )}
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Empty State */}

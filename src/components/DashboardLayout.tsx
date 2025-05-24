@@ -87,7 +87,7 @@ const DashboardLayout: React.FC = () => {
     },
     { icon: BookOpen, label: "Saved Jobs", path: "/dashboard/saved-jobs" },
     { icon: User, label: "My Profile", path: "/dashboard/my-profile" },
-    { icon: CreditCard, label: "Payments", path: "/dashboard/payments" },
+    // { icon: CreditCard, label: "Payments", path: "/dashboard/payments" },
   ];
 
   const sidebarItems =

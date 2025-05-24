@@ -6,6 +6,8 @@ import {
   Calendar,
   Award,
   ArrowRight,
+  MessageSquare,
+  Briefcase,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -232,6 +234,84 @@ export default function LearnGerman() {
                 <li className="flex items-start">
                   <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
                   <span>Recorded sessions for review</span>
+                </li>
+              </ul>
+            </div>
+          </motion.div>
+
+          {/* NEW: Card 4 - B1 Level Classes */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+          >
+            <div className="p-6">
+              <div className="bg-indigo-100 rounded-full w-12 h-12 flex items-center justify-center mb-4">
+                <MessageSquare className="h-6 w-6 text-indigo-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                B1 Level Classes
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Take your German to the intermediate level with our specialized B1 classes. Perfect for healthcare professionals preparing for workplace communication.
+              </p>
+              <ul className="space-y-2">
+                <li className="flex items-start">
+                  <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                  <span>Medical and technical vocabulary</span>
+                </li>
+                <li className="flex items-start">
+                  <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                  <span>Complex sentence structures</span>
+                </li>
+                <li className="flex items-start">
+                  <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                  <span>Workplace communication scenarios</span>
+                </li>
+                <li className="flex items-start">
+                  <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                  <span>Telc B1 exam preparation</span>
+                </li>
+              </ul>
+            </div>
+          </motion.div>
+
+          {/* NEW: Card 5 - B2 Level Classes */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+          >
+            <div className="p-6">
+              <div className="bg-indigo-100 rounded-full w-12 h-12 flex items-center justify-center mb-4">
+                <Briefcase className="h-6 w-6 text-indigo-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                B2 Level Classes
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Achieve professional fluency with our advanced B2 classes. Essential for IT professionals and those seeking long-term career growth in Germany.
+              </p>
+              <ul className="space-y-2">
+                <li className="flex items-start">
+                  <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                  <span>Advanced professional vocabulary</span>
+                </li>
+                <li className="flex items-start">
+                  <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                  <span>Technical discussions and presentations</span>
+                </li>
+                <li className="flex items-start">
+                  <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                  <span>Job interview preparation</span>
+                </li>
+                <li className="flex items-start">
+                  <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                  <span>Goethe/Telc B2 certification preparation</span>
                 </li>
               </ul>
             </div>

@@ -239,69 +239,71 @@ function JobDetails() {
                   </div>
                 )}
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">
+                  <h1 className="text-xl md:text-2xl font-bold text-gray-900">
                     {job.title}
                   </h1>
-                  <div className="mt-4 flex flex-wrap gap-4">
-                    <div className="flex items-center text-gray-500">
-                      <Icons.Building2 className="w-5 h-5 mr-1.5" />
-                      {job.company?.name}
+                  <div className="mt-3 md:mt-4 flex flex-col md:flex-row md:flex-wrap gap-2 md:gap-4">
+                    <div className="flex items-center text-gray-500 text-sm md:text-base">
+                      <Icons.Building2 className="w-4 h-4 md:w-5 md:h-5 mr-1.5 flex-shrink-0" />
+                      <span className="truncate">{job.company?.name}</span>
                     </div>
-                    <div className="flex items-center text-gray-500">
-                      <Icons.MapPin className="w-5 h-5 mr-1.5" />
-                      {job.location}
+                    <div className="flex items-center text-gray-500 text-sm md:text-base">
+                      <Icons.MapPin className="w-4 h-4 md:w-5 md:h-5 mr-1.5 flex-shrink-0" />
+                      <span className="truncate">{job.location}</span>
                     </div>
-                    {(job.salary_min || job.salary_max) ? (
-                      <div className="flex items-center text-gray-500">
-                        <Icons.Euro className="w-5 h-5 mr-1.5" />
-                        {job.salary_min && job.salary_max
-                          ? `${job.salary_min.toLocaleString()}€ - ${job.salary_max.toLocaleString()}€`
-                          : job.salary_min
-                          ? `From ${job.salary_min.toLocaleString()}€`
-                          : `Up to ${job.salary_max?.toLocaleString()}€`}
-                        <span className="ml-1">/ year</span>
+                    {job.salary_min || job.salary_max ? (
+                      <div className="flex items-center text-gray-500 text-sm md:text-base">
+                        <Icons.Euro className="w-4 h-4 md:w-5 md:h-5 mr-1.5 flex-shrink-0" />
+                        <span className="truncate">
+                          {job.salary_min && job.salary_max
+                            ? `${job.salary_min.toLocaleString()}€ - ${job.salary_max.toLocaleString()}€`
+                            : job.salary_min
+                            ? `From ${job.salary_min.toLocaleString()}€`
+                            : `Up to ${job.salary_max?.toLocaleString()}€`}
+                          <span className="ml-1">/ year</span>
+                        </span>
                       </div>
                     ) : (
-                      <div className="flex items-center text-gray-500">
-                        <Icons.Euro className="w-5 h-5 mr-1.5" />
-                        Salary not specified
+                      <div className="flex items-center text-gray-500 text-sm md:text-base">
+                        <Icons.Euro className="w-4 h-4 md:w-5 md:h-5 mr-1.5 flex-shrink-0" />
+                        <span>Salary not specified</span>
                       </div>
                     )}
-                    <div className="flex items-center text-gray-500">
-                      <Icons.Briefcase className="w-5 h-5 mr-1.5" />
+                    <div className="flex items-center text-gray-500 text-sm md:text-base">
+                      <Icons.Briefcase className="w-4 h-4 md:w-5 md:h-5 mr-1.5 flex-shrink-0" />
                       <span className="capitalize">{job.type}</span>
                     </div>
                   </div>
                 </div>
               </div>
-              <div className="flex items-center space-x-4 ">
+              <div className="flex flex-col sm:flex-row items-center gap-3 mt-4 md:mt-0">
                 {isSaving ? (
-                  <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                  <Loader2 className="w-6 h-6 md:w-8 md:h-8 animate-spin text-blue-600" />
                 ) : (
                   <button
                     onClick={handleSaveJob}
                     disabled={isSaving}
-                    className={`p-2.5 rounded-lg transition ${
+                    className={`p-2 md:p-2.5 rounded-lg transition ${
                       checkIfJobIsSaved(job?.id || "")
-                      ? "text-blue-600 hover:bg-blue-50"
-                      : "text-gray-400 hover:bg-gray-50"
-                  }`}
-                  title={
-                    checkIfJobIsSaved(job?.id || "")
-                      ? "Remove from saved jobs"
-                      : "Save job"
-                  }
-                >
-                  <Icons.Bookmark
-                    className={`w-6 h-6 ${
-                      checkIfJobIsSaved(job?.id || "") ? "fill-current" : ""
+                        ? "text-blue-600 hover:bg-blue-50"
+                        : "text-gray-400 hover:bg-gray-50"
                     }`}
-                  />
-                </button>
+                    title={
+                      checkIfJobIsSaved(job?.id || "")
+                        ? "Remove from saved jobs"
+                        : "Save job"
+                    }
+                  >
+                    <Icons.Bookmark
+                      className={`w-5 h-5 md:w-6 md:h-6 ${
+                        checkIfJobIsSaved(job?.id || "") ? "fill-current" : ""
+                      }`}
+                    />
+                  </button>
                 )}
                 {hasApplied ? (
                   <button
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-green-700 bg-green-100"
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-green-700 bg-green-100 w-full sm:w-auto justify-center"
                     disabled
                   >
                     <Icons.Check className="w-4 h-4 mr-2" />
@@ -310,7 +312,7 @@ function JobDetails() {
                 ) : (
                   <button
                     onClick={handleApply}
-                    className="bg-blue-600 text-white rounded-full hover:bg-blue-700 transition w-48 h-12"
+                    className="bg-blue-600 text-white rounded-full hover:bg-blue-700 transition w-full sm:w-48 h-10 md:h-12"
                   >
                     Apply Now
                   </button>
@@ -433,7 +435,7 @@ function JobDetails() {
           )}
 
           {/* Company Benefits */}
-        {job.company?.benefits && job.company?.benefits.length > 0 && (
+          {job.company?.benefits && job.company?.benefits.length > 0 && (
             <div className="bg-white p-6 rounded-xl shadow-sm">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">
                 Company Benefits
