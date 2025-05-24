@@ -44,6 +44,7 @@ import EditCompany from "./pages/company/Edit";
 import JobPostingForm from "./pages/dashboard/JobPostingForm";
 import NewCompany from "./pages/company/New";
 import LearnGerman from "./pages/LearnGerman";
+import JobsView from "./pages/dashboard/JobsView";
 
 // Protected route component
 const ProtectedRoute = ({
@@ -275,6 +276,15 @@ function App() {
                   element={
                     <ProtectedRoute allowedUserType="employer">
                       <JobsManagement />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="jobs/view/:id"
+                  element={
+                    <ProtectedRoute allowedUserType="employer">
+                      <JobsView />
                     </ProtectedRoute>
                   }
                 />

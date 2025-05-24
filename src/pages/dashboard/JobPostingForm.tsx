@@ -1,18 +1,23 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useAuth } from '../../lib/AuthContext';
-import { Briefcase, Save, Loader2, FileText, DollarSign } from 'lucide-react';
-import { getJob, createJob, updateJob, Job, getCompanyByOwner } from '../../lib/api';
-import { toast } from 'react-hot-toast';
-import Input from '../../components/forms/Input';
-import TextArea from '../../components/forms/TextArea';
-import Select from '../../components/forms/Select';
+import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useAuth } from "../../lib/AuthContext";
+import { Briefcase, Save, Loader2, FileText, DollarSign } from "lucide-react";
+import {
+  getJob,
+  createJob,
+  updateJob,
+  getCompanyByOwner,
+} from "../../lib/api";
+import { toast } from "react-hot-toast";
+import Input from "../../components/forms/Input";
+import TextArea from "../../components/forms/TextArea";
+import Select from "../../components/forms/Select";
 
 interface FormData {
   title: string;
   description: string;
   location: string;
-  type: Job['type'];
+  type: string;
   salary_min: number | null;
   salary_max: number | null;
   requirements: string;
@@ -34,27 +39,36 @@ interface FormErrors {
 
 // Type-safe way to check if a string is a key of FormErrors
 function isFormField(key: string): key is keyof FormErrors {
-  return ['title', 'description', 'location', 'type', 'salary_min', 'salary_max', 'requirements', 'company_id'].includes(key);
+  return [
+    "title",
+    "description",
+    "location",
+    "type",
+    "salary_min",
+    "salary_max",
+    "requirements",
+    "company_id",
+  ].includes(key);
 }
 
 const initialFormData: FormData = {
-  title: '',
-  description: '',
-  location: '',
-  type: 'full-time',
+  title: "",
+  description: "",
+  location: "",
+  type: "full-time",
   salary_min: null,
   salary_max: null,
-  requirements: '',
-  company_id: '',
+  requirements: "",
+  company_id: "",
   is_active: true, // Default to active
   benefits: [], // Empty benefits array
 };
 
 const jobTypes = [
-  { value: 'full-time', label: 'Full-time' },
-  { value: 'part-time', label: 'Part-time' },
-  { value: 'contract', label: 'Contract' },
-  { value: 'internship', label: 'Internship' }
+  { value: "full-time", label: "Full-time" },
+  { value: "part-time", label: "Part-time" },
+  { value: "contract", label: "Contract" },
+  { value: "internship", label: "Internship" },
 ];
 
 const JobPostingForm: React.FC = () => {
@@ -62,11 +76,61 @@ const JobPostingForm: React.FC = () => {
   const { id: jobId } = useParams<{ id: string }>();
   const { user } = useAuth();
   const [formData, setFormData] = useState<FormData>(initialFormData);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  const [currentType, setCurrentType] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
-  
+
   // New state for benefits input
-  const [newBenefit, setNewBenefit] = useState('');
+  const [newBenefit, setNewBenefit] = useState("");
+
+  // When the component loads, parse any existing types
+  useEffect(() => {
+    if (jobId && formData.type) {
+      // Split the comma-separated string into an array
+      const typesArray = formData.type.split(",").map((type) => type.trim());
+      setSelectedTypes(typesArray);
+
+      // Set the first type as the current selection or empty if none
+      setCurrentType(typesArray.length > 0 ? typesArray[0] : "");
+    }
+  }, [jobId, formData.type]);
+
+  // Handle type selection change
+  const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setCurrentType(e.target.value);
+  };
+
+  // Add the selected type to the list
+  const addType = () => {
+    if (currentType && !selectedTypes.includes(currentType)) {
+      const newTypes = [...selectedTypes, currentType];
+      setSelectedTypes(newTypes);
+
+      // Update the formData with comma-separated string
+      setFormData((prev) => ({
+        ...prev,
+        type: newTypes.join(", "),
+      }));
+
+      // Clear any type error
+      if (errors.type) {
+        setErrors((prev) => ({ ...prev, type: "" }));
+      }
+    }
+  };
+
+  // Remove a type from the list
+  const removeType = (typeToRemove: string) => {
+    const newTypes = selectedTypes.filter((type) => type !== typeToRemove);
+    setSelectedTypes(newTypes);
+
+    // Update the formData with comma-separated string
+    setFormData((prev) => ({
+      ...prev,
+      type: newTypes.join(", "),
+    }));
+  };
 
   useEffect(() => {
     if (user) {
@@ -80,23 +144,23 @@ const JobPostingForm: React.FC = () => {
 
       const company = await getCompanyByOwner(user.id);
       if (!company) {
-        toast.error('No company found. Please create a company first.');
-        navigate('/company/new');
+        toast.error("No company found. Please create a company first.");
+        navigate("/company/new");
         return;
       }
 
       if (jobId) {
         const job = await getJob(jobId);
         if (!job) {
-          toast.error('Job not found');
-          navigate('/dashboard/jobs/manage');
+          toast.error("Job not found");
+          navigate("/dashboard/jobs/manage");
           return;
         }
 
         // Verify that the job belongs to the user's company
         if (job.company_id !== company.id) {
-          toast.error('You do not have permission to edit this job');
-          navigate('/dashboard/jobs/manage');
+          toast.error("You do not have permission to edit this job");
+          navigate("/dashboard/jobs/manage");
           return;
         }
 
@@ -107,60 +171,66 @@ const JobPostingForm: React.FC = () => {
           type: job.type,
           salary_min: job.salary_min ?? null,
           salary_max: job.salary_max ?? null,
-          requirements: job.requirements.join('\n'),
+          requirements: job.requirements.join("\n"),
           company_id: job.company_id,
           is_active: job.is_active !== false, // Default to true if not specified
           benefits: job.benefits || [], // Use benefits if available
         });
       } else {
         // For new job creation, just set the company_id
-        setFormData(prev => ({ ...prev, company_id: company.id }));
+        setFormData((prev) => ({ ...prev, company_id: company.id }));
       }
     } catch (error) {
-      console.error('Error loading job:', error);
-      toast.error('Failed to load job details');
+      console.error("Error loading job:", error);
+      toast.error("Failed to load job details");
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
     const { name, value, type } = e.target;
-    
+
     // Clear error when user starts typing
     if (isFormField(name) && errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: '' }));
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
 
     setFormData((prev) => {
-      if (name === 'salary_min' || name === 'salary_max') {
+      if (name === "salary_min" || name === "salary_max") {
         return { ...prev, [name]: parseFloat(value) || null };
       }
-      if (type === 'checkbox') {
+      if (type === "checkbox") {
         return { ...prev, [name]: (e.target as HTMLInputElement).checked };
       }
       return { ...prev, [name]: value };
     });
   };
 
-  const handleRequirementsChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleRequirementsChange = (
+    e: React.ChangeEvent<HTMLTextAreaElement>
+  ) => {
     const requirements = e.target.value;
-    setFormData(prev => ({ ...prev, requirements }));
+    setFormData((prev) => ({ ...prev, requirements }));
   };
-  
+
   // Add benefit functions
   const addBenefit = () => {
     if (newBenefit.trim()) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        benefits: [...prev.benefits, newBenefit.trim()]
+        benefits: [...prev.benefits, newBenefit.trim()],
       }));
-      setNewBenefit('');
+      setNewBenefit("");
     }
   };
 
   const removeBenefit = (index: number) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      benefits: prev.benefits.filter((_, i) => i !== index)
+      benefits: prev.benefits.filter((_, i) => i !== index),
     }));
   };
 
@@ -168,25 +238,31 @@ const JobPostingForm: React.FC = () => {
     const errors: FormErrors = {};
 
     if (!formData.title.trim()) {
-      errors.title = 'Job title is required';
+      errors.title = "Job title is required";
     }
 
     if (!formData.description.trim()) {
-      errors.description = 'Job description is required';
+      errors.description = "Job description is required";
     }
 
     if (!formData.location.trim()) {
-      errors.location = 'Location is required';
+      errors.location = "Location is required";
     }
 
     if (!formData.type) {
-      errors.type = 'Job type is required';
+      errors.type = "Job type is required";
     }
 
     if (formData.salary_min !== null && formData.salary_max !== null) {
       if (formData.salary_min > formData.salary_max) {
-        errors.salary_min = 'Minimum salary cannot be greater than maximum salary';
+        errors.salary_min =
+          "Minimum salary cannot be greater than maximum salary";
       }
+    }
+
+    // Check if any job types are selected
+    if (!formData.type || formData.type.trim() === "") {
+      errors.type = "At least one job type is required";
     }
 
     return errors;
@@ -195,7 +271,7 @@ const JobPostingForm: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const validationErrors = validateForm(formData);
-    
+
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       return;
@@ -206,9 +282,9 @@ const JobPostingForm: React.FC = () => {
     try {
       // Split requirements into array and filter out empty lines
       const requirementsArray = formData.requirements
-        .split('\n')
-        .map(req => req.trim())
-        .filter(req => req);
+        .split("\n")
+        .map((req) => req.trim())
+        .filter((req) => req);
 
       const jobData = {
         ...formData,
@@ -217,32 +293,43 @@ const JobPostingForm: React.FC = () => {
 
       if (jobId) {
         await updateJob(jobId, jobData);
-        toast.success('Job updated successfully');
+        toast.success("Job updated successfully");
       } else {
         await createJob(jobData);
-        toast.success('Job created successfully');
+        toast.success("Job created successfully");
       }
-      navigate('/dashboard/jobs/manage');
+      navigate("/dashboard/jobs/manage");
     } catch (error) {
-      console.error('Error saving job:', error);
-      toast.error(jobId ? 'Failed to update job' : 'Failed to create job');
+      console.error("Error saving job:", error);
+      toast.error(jobId ? "Failed to update job" : "Failed to create job");
     } finally {
       setIsLoading(false);
     }
   };
 
   // Form section component
-  const FormSection = useCallback(({ title, children, icon }: { title: string; children: React.ReactNode; icon: React.ReactNode }) => (
-    <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-      <div className="flex items-center space-x-3 pb-4 border-b border-gray-100">
-        <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">{icon}</div>
-        <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
+  const FormSection = useCallback(
+    ({
+      title,
+      children,
+      icon,
+    }: {
+      title: string;
+      children: React.ReactNode;
+      icon: React.ReactNode;
+    }) => (
+      <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+        <div className="flex items-center space-x-3 pb-4 border-b border-gray-100">
+          <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+            {icon}
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
+        </div>
+        <div className="pt-4 space-y-4">{children}</div>
       </div>
-      <div className="pt-4 space-y-4">
-        {children}
-      </div>
-    </div>
-  ), []);
+    ),
+    []
+  );
 
   if (isLoading && jobId) {
     return (
@@ -252,14 +339,18 @@ const JobPostingForm: React.FC = () => {
     );
   }
 
+  console.log("Type", formData.type)
+
   return (
-    <div className="min-h-screen bg-gray-50 pt-24 pb-12">
+    <div className="min-h-screen bg-gray-50 pt-12 pb-12">
       <div className="container mx-auto px-4 max-w-4xl">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          {jobId ? 'Edit Job Posting' : 'Create Job Posting'}
+          {jobId ? "Edit Job Posting" : "Create Job Posting"}
         </h1>
         <p className="text-gray-600 mb-8">
-          {jobId ? 'Update your job listing details' : 'Create a new job listing for your company'}
+          {jobId
+            ? "Update your job listing details"
+            : "Create a new job listing for your company"}
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -294,15 +385,76 @@ const JobPostingForm: React.FC = () => {
               placeholder="e.g., Berlin, Remote"
             />
 
-            <Select
-              label="Job Type"
-              name="type"
-              value={formData.type}
-              onChange={handleChange}
-              error={!!errors.type}
-              required
-              options={jobTypes}
-            />
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Job Types
+                {!selectedTypes.length && (
+                  <span className="text-red-500 ml-1">*</span>
+                )}
+              </label>
+
+              <div className="grid grid-cols-4 gap-4">
+                <div className="col-span-3">
+                  <Select
+                    label=""
+                    name="currentType"
+                    value={currentType}
+                    onChange={handleTypeChange}
+                    options={jobTypes}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={addType}
+                  className="px-3 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  Add
+                </button>
+              </div>
+
+              {errors.type && (
+                <p className="mt-1 text-sm text-red-600">{errors.type}</p>
+              )}
+
+              {selectedTypes.length > 0 && (
+                <div className="mt-2">
+                  <div className="flex flex-wrap gap-2">
+                    {selectedTypes.map((type) => {
+                      const typeLabel =
+                        jobTypes.find((t) => t.value === type)?.label || type;
+                      return (
+                        <div
+                          key={type}
+                          className="inline-flex items-center px-2.5 py-1.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 mt-2"
+                        >
+                          {typeLabel}
+                          <button
+                            type="button"
+                            onClick={() => removeType(type)}
+                            className="ml-1.5 inline-flex items-center justify-center h-4 w-4 rounded-full text-indigo-400 hover:bg-indigo-200 hover:text-indigo-500 focus:outline-none"
+                          >
+                            <span className="sr-only">Remove {typeLabel}</span>
+                            <svg
+                              className="h-3 w-3"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M6 18L18 6M6 6l12 12"
+                              />
+                            </svg>
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
           </FormSection>
 
           <FormSection title="Compensation" icon={<DollarSign size={20} />}>
@@ -311,7 +463,7 @@ const JobPostingForm: React.FC = () => {
                 label="Minimum Salary"
                 type="number"
                 name="salary_min"
-                value={formData.salary_min || ''}
+                value={formData.salary_min || ""}
                 onChange={handleChange}
                 error={errors.salary_min}
                 placeholder="e.g., 50000"
@@ -321,13 +473,13 @@ const JobPostingForm: React.FC = () => {
                 label="Maximum Salary"
                 type="number"
                 name="salary_max"
-                value={formData.salary_max || ''}
+                value={formData.salary_max || ""}
                 onChange={handleChange}
                 error={errors.salary_max}
                 placeholder="e.g., 70000"
               />
             </div>
-            
+
             {/* Benefits section */}
             <div className="mt-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -391,7 +543,8 @@ const JobPostingForm: React.FC = () => {
 
                 {formData.benefits.length === 0 && (
                   <p className="text-sm text-gray-500 italic">
-                    No benefits added yet. Add some to make your job posting more attractive!
+                    No benefits added yet. Add some to make your job posting
+                    more attractive!
                   </p>
                 )}
               </div>
@@ -409,7 +562,7 @@ const JobPostingForm: React.FC = () => {
               placeholder="Bachelor's degree in Computer Science or related field&#10;5+ years of experience in frontend development&#10;Strong proficiency in React and TypeScript"
               helpText="Enter each requirement on a new line"
             />
-            
+
             {/* Active status checkbox */}
             <div className="flex items-center mt-4">
               <input
@@ -432,7 +585,7 @@ const JobPostingForm: React.FC = () => {
           <div className="flex justify-end space-x-3">
             <button
               type="button"
-              onClick={() => navigate('/dashboard/jobs/manage')}
+              onClick={() => navigate("/dashboard/jobs/manage")}
               className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
               Cancel
@@ -444,7 +597,7 @@ const JobPostingForm: React.FC = () => {
             >
               {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               {!isLoading && <Save className="h-4 w-4 mr-2" />}
-              {jobId ? 'Update Job' : 'Create Job'}
+              {jobId ? "Update Job" : "Create Job"}
             </button>
           </div>
         </form>

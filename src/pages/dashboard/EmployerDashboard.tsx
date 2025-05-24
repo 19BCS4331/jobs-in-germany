@@ -123,14 +123,14 @@ const EmployerDashboard: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-8 flex-col md:flex-row">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
           <p className="mt-1 text-sm text-gray-500">
             Welcome back, {company?.name}
           </p>
         </div>
-        <div className="flex space-x-4">
+        <div className="flex space-x-4 mt-4 md:mt-0">
           <Link
             to="/dashboard/jobs/new"
             className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"

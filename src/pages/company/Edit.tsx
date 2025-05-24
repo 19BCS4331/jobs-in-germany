@@ -392,7 +392,7 @@ function EditCompany() {
                       Upload a high-quality logo to make your company stand out
                     </p>
                   </div>
-                  <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-4 flex-col md:flex-row space-y-4">
                     <input
                       type="file"
                       ref={fileInputRef}
@@ -413,7 +413,7 @@ function EditCompany() {
                       <button
                         type="button"
                         onClick={handleRemoveLogo}
-                        className="inline-flex items-center px-3 py-2 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                        className="inline-flex items-center px-6 py-2 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                       >
                         Remove Logo
                       </button>

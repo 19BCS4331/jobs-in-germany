@@ -36,7 +36,7 @@ export interface Job {
   title: string;
   description: string;
   location: string;
-  type: 'full-time' | 'part-time' | 'contract' | 'internship';
+  type: string;
   salary_min?: number | null;
   salary_max?: number | null;
   requirements: string[];
@@ -46,6 +46,7 @@ export interface Job {
   applications_count?: number | null;
   is_active?: boolean;
   benefits?: string[] | null;
+  is_deleted?: boolean;
 }
 
 export interface JobWithFullCompany extends Omit<Job, 'company'> {
@@ -488,7 +489,8 @@ export async function getJobs(filters?: {
           contact_person_number,
           benefits
         )
-      `);
+      `)
+      .eq('is_deleted', false);
 
     if (filters?.search) {
       query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
@@ -544,6 +546,7 @@ export async function getJob(id: string): Promise<Job | null> {
         )
       `)
       .eq('id', id)
+      .eq('is_deleted', false)
       .single();
 
     if (error) {
@@ -579,10 +582,42 @@ export async function getJobsByCompany(companyId: string): Promise<Job[]> {
       applications_count:job_applications(count)
     `)
     .eq('company_id', companyId)
+    .eq('is_deleted', false)
     .order('created_at', { ascending: false });
 
   if (error) {
     console.error('Error fetching company jobs:', error);
+    throw error;
+  }
+
+  return (data as any[]).map(job => ({
+    ...transformJob(job),
+    applications_count: job.applications_count?.[0]?.count || 0
+  }));
+}
+
+export async function getDeletedJobsByCompany(companyId: string): Promise<Job[]> {
+  console.log('Fetching deleted jobs for company:', companyId);
+  const { data, error } = await supabase
+    .from('jobs')
+    .select(`
+      *,
+      companies:companies!company_id (
+        id,
+        name,
+        logo_url,
+        contact_person_name,
+        contact_person_number,
+        benefits
+      ),
+      applications_count:job_applications(count)
+    `)
+    .eq('company_id', companyId)
+    .eq('is_deleted', true)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching deleted company jobs:', error);
     throw error;
   }
 
@@ -644,9 +679,21 @@ export async function updateJob(id: string, job: Partial<Omit<Job, 'id' | 'creat
 }
 
 export async function deleteJob(id: string): Promise<boolean> {
+  // Soft delete by setting is_deleted to true
   const { error } = await supabase
     .from('jobs')
-    .delete()
+    .update({ is_deleted: true })
+    .eq('id', id);
+
+  if (error) throw error;
+  return true;
+}
+
+export async function restoreJob(id: string): Promise<boolean> {
+  //  Restore by setting is_deleted to false
+  const { error } = await supabase
+    .from('jobs')
+    .update({ is_deleted: false })
     .eq('id', id);
 
   if (error) throw error;
@@ -1159,6 +1206,9 @@ export const queryKeys = {
     all: ['jobs'] as const,
     byCompany: (companyId: string) => ['jobs', 'company', companyId] as const,
     detail: (jobId: string) => ['jobs', jobId] as const,
+  },
+  deletedJobs: {
+    byCompany: (companyId: string) => ['jobs', 'deleted', 'company', companyId] as const,
   },
   applications: {
     all: ['applications'] as const,
