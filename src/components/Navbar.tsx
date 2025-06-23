@@ -95,7 +95,7 @@ const Navbar = () => {
     { path: '/jobs', label: 'Find Jobs', blocked: profile?.user_type === 'employer' ? true : false },
     { path: '/contact', label: 'Contact Us' },
     { path: '/learn-german', label: 'Learn German for Free',highlight: true  },
-    { path: 'https://www.thenestindia.com/index.html', label: 'Help A Child', highlight: true  },
+    { path: 'https://www.thenestindia.com/index.html', label: 'Help A Child', highlight: true, target: '_blank'  },
   ];
 
   const profileMenuItems = profile?.user_type === 'employer' ? [
@@ -129,6 +129,7 @@ const Navbar = () => {
                 <NavLink
                   key={item.path}
                   to={item.path}
+                  target={item.target}
                   className={({ isActive }) =>
                     `relative inline-flex items-center px-3 py-2 text-sm font-medium transition-colors duration-200 ${
                       isActive
@@ -257,6 +258,7 @@ const Navbar = () => {
               <NavLink
                 key={item.path}
                 to={item.path}
+                target={item.target}
                 onClick={toggleMenu}
                 className={({ isActive }) =>
                   `block px-3 py-2 rounded-md text-base font-medium ${
