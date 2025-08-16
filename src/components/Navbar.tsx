@@ -92,7 +92,10 @@ const Navbar = () => {
     { path: '/how-it-works', label: 'How It Works' },
     // { path: '/resources', label: 'Resources' },
     // { path: '/blog', label: 'Blog' },
-    { path: '/jobs', label: 'Find Jobs', blocked: profile?.user_type === 'employer' ? true : false },
+    { path: '/jobs', label: 'Find Jobs', 
+      // blocked: profile?.user_type === 'employer' ? true : false 
+      blocked: true
+    },
     { path: '/contact', label: 'Contact Us' },
     { path: '/learn-german', label: 'Learn German for Free',highlight: true  },
     { path: 'https://www.thenestindia.com/index.html', label: 'Help A Child', highlight: true, target: '_blank'  },

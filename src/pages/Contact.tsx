@@ -274,7 +274,10 @@ const Contact: React.FC = () => {
                     </div>
                     <div>
                       <h3 className="text-lg font-medium text-gray-900">Call Us</h3>
-                      <p className="mt-1 text-gray-600 cursor-pointer hover:text-indigo-600" onClick={() => window.open('tel:+919819761300', '_blank')}>+91 9819761300</p>
+                      <div className="flex flex-row space-x-1">
+                      <p className="mt-1 text-gray-600 cursor-pointer hover:text-indigo-600" onClick={() => window.open('tel:+919819761300', '_blank')}>+91 9819761300 /</p>
+                      <p className="mt-1 text-gray-600 cursor-pointer hover:text-indigo-600" onClick={() => window.open('tel:+917900168820', '_blank')}>+91 7900168820</p>
+                      </div>
                       <p className="mt-1 text-gray-600 cursor-pointer hover:text-indigo-600" onClick={() => window.open('tel:+9102266587777', '_blank')}>+91 022-66587777</p>
                     </div>
                   </div>
@@ -295,6 +298,7 @@ const Contact: React.FC = () => {
                       <h3 className="text-lg font-medium text-gray-900">Locations</h3>
                       <p className="mt-1 text-gray-600">1. Mumbai, India</p>
                       <p className="mt-1 text-gray-600">2. Kerala, India</p>
+                      <p className="mt-1 text-gray-600">3. Sydney, Australia</p>
                     </div>
                   </div>
                 </motion.div>
