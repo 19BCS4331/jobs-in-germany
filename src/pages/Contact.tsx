@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, MapPin, MessageCircle, Clock, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Mail, MapPin, MessageCircle, Clock, CheckCircle2, AlertCircle, Globe2 } from 'lucide-react';
 import emailjs from '@emailjs/browser';
 import Input from '../components/forms/Input';
 import TextArea from '../components/forms/TextArea';
@@ -235,7 +235,28 @@ const Contact: React.FC = () => {
                     </div>
                     <div>
                       <h3 className="text-lg font-medium text-gray-900">Send us a Mail</h3>
-                      <p className="mt-1 text-gray-600 cursor-pointer" onClick={() => window.open('mailto:info@thegermanyjobs.com', '_blank')}>info@thegermanyjobs.com</p>
+                      <p className="mt-1 text-gray-600 cursor-pointer hover:text-indigo-600" onClick={() => window.open('mailto:info@thegermanyjobs.com', '_blank')}>info@thegermanyjobs.com</p>
+                      <p className="mt-1 text-gray-600 cursor-pointer hover:text-indigo-600" onClick={() => window.open('mailto:seema@maraekat.com', '_blank')}>seema@maraekat.com</p>
+                    </div>
+                  </div>
+                </motion.div>
+
+                <motion.div 
+                  className="bg-white/50 backdrop-blur-sm rounded-xl p-6 border border-gray-100 shadow-sm"
+                  whileHover={{ y: -3 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 25 }}
+                >
+                  <div className="flex items-center space-x-4">
+                    <div className="flex-shrink-0">
+                      <div className="p-3 bg-indigo-50 rounded-lg">
+                        <Globe2 className="h-6 w-6 text-indigo-600" />
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-900">Our Websites</h3>
+                     
+                      <p className="mt-1 text-gray-600 cursor-pointer hover:text-indigo-600" onClick={() => window.open('https://www.maraekat.com', '_blank')}>www.maraekat.com</p>
+                      <p className="mt-1 text-gray-600 cursor-pointer hover:text-indigo-600" onClick={() => window.open('https://www.thenestindia.com/index.html', '_blank')}>www.thenestindia.com</p>
                     </div>
                   </div>
                 </motion.div>
@@ -253,8 +274,8 @@ const Contact: React.FC = () => {
                     </div>
                     <div>
                       <h3 className="text-lg font-medium text-gray-900">Call Us</h3>
-                      <p className="mt-1 text-gray-600 cursor-pointer" onClick={() => window.open('tel:+919819761300', '_blank')}>+91 9819761300</p>
-                      <p className="mt-1 text-gray-600 cursor-pointer" onClick={() => window.open('tel:+9102266587777', '_blank')}>+91 022-66587777</p>
+                      <p className="mt-1 text-gray-600 cursor-pointer hover:text-indigo-600" onClick={() => window.open('tel:+919819761300', '_blank')}>+91 9819761300</p>
+                      <p className="mt-1 text-gray-600 cursor-pointer hover:text-indigo-600" onClick={() => window.open('tel:+9102266587777', '_blank')}>+91 022-66587777</p>
                     </div>
                   </div>
                 </motion.div>
