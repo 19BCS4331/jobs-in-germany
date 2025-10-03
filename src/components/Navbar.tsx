@@ -1,10 +1,23 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { NavLink, useNavigate, Link, useLocation } from 'react-router-dom';
-import { Menu, X, Briefcase, LogOut, User, ChevronDown, Loader2, Settings, Building2, Layout, FileText, BookOpen } from 'lucide-react';
-import toast from 'react-hot-toast';
-import { signOut } from '../lib/auth';
-import { useAuth } from '../lib/AuthContext';
-import logo from '../assets/images/TGJ_NEWEST_NO_BG.png';
+import { useState, useRef, useEffect } from "react";
+import { NavLink, useNavigate, Link, useLocation } from "react-router-dom";
+import {
+  Menu,
+  X,
+  // Briefcase,
+  LogOut,
+  User,
+  ChevronDown,
+  Loader2,
+  // Settings,
+  // Building2,
+  Layout,
+  // FileText,
+  // BookOpen,
+} from "lucide-react";
+import toast from "react-hot-toast";
+import { signOut } from "../lib/auth";
+import { useAuth } from "../lib/AuthContext";
+import logo from "../assets/images/TGJ_NEWEST_NO_BG.png";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -15,7 +28,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const isLandingPage = location.pathname === '/';
+  const isLandingPage = location.pathname === "/";
 
   useEffect(() => {
     const handleScroll = () => {
@@ -25,27 +38,30 @@ const Navbar = () => {
     };
 
     if (isLandingPage) {
-      window.addEventListener('scroll', handleScroll);
+      window.addEventListener("scroll", handleScroll);
       handleScroll(); // Check initial scroll position
     } else {
       setIsScrolled(true);
     }
 
     return () => {
-      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener("scroll", handleScroll);
     };
   }, [isLandingPage]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setShowProfileMenu(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
@@ -54,27 +70,27 @@ const Navbar = () => {
       setIsSigningOut(true);
       await signOut();
       setShowProfileMenu(false);
-      toast.success('Signed out successfully', {
+      toast.success("Signed out successfully", {
         duration: 3000,
-        position: 'bottom-right',
+        position: "bottom-right",
         style: {
-          background: '#4F46E5',
-          color: '#fff',
-          padding: '12px 24px',
-          borderRadius: '8px',
+          background: "#4F46E5",
+          color: "#fff",
+          padding: "12px 24px",
+          borderRadius: "8px",
         },
       });
-      navigate('/');
+      navigate("/");
     } catch (error) {
-      console.error('Error signing out:', error);
-      toast.error('Failed to sign out. Please try again.', {
+      console.error("Error signing out:", error);
+      toast.error("Failed to sign out. Please try again.", {
         duration: 3000,
-        position: 'bottom-right',
+        position: "bottom-right",
         style: {
-          background: '#EF4444',
-          color: '#fff',
-          padding: '12px 24px',
-          borderRadius: '8px',
+          background: "#EF4444",
+          color: "#fff",
+          padding: "12px 24px",
+          borderRadius: "8px",
         },
       });
     } finally {
@@ -88,31 +104,49 @@ const Navbar = () => {
   };
 
   const navItems = [
-    { path: '/', label: 'Home' },
-    { path: '/how-it-works', label: 'How It Works' },
+    { path: "/", label: "Home" },
+    {
+      path: "/about-us",
+      label: "About Us",
+      highlight: true,
+    },
+    { path: "/how-it-works", label: "How It Works" },
     // { path: '/resources', label: 'Resources' },
     // { path: '/blog', label: 'Blog' },
-    { path: '/jobs', label: 'Find Jobs', 
-      // blocked: profile?.user_type === 'employer' ? true : false 
-      blocked: true
+    {
+      path: "/jobs",
+      label: "Find Jobs",
+      // blocked: profile?.user_type === 'employer' ? true : false
+      blocked: true,
     },
-    { path: '/contact', label: 'Contact Us' },
-    { path: '/learn-german', label: 'Learn German for Free',highlight: true  },
-    { path: 'https://www.thenestindia.com/index.html', label: 'Help A Child', highlight: true, target: '_blank'  },
+    { path: "/contact", label: "Contact Us" },
+    { path: "/learn-german", label: "Learn German for Free", highlight: true },
+    {
+      path: "/study-programs",
+      label: "Study In Germany",
+      highlight: true,
+    },
+    {
+      path: "https://www.thenestindia.com/index.html",
+      label: "Help A Child",
+      highlight: true,
+      target: "_blank",
+    },
   ];
 
-  const profileMenuItems = profile?.user_type === 'employer' ? [
-    { icon: Layout, label: 'Dashboard', path: '/dashboard' },
-  ] : [
-    { icon: Layout, label: 'Dashboard', path: '/dashboard' },
-  ];
+  const profileMenuItems =
+    profile?.user_type === "employer"
+      ? [{ icon: Layout, label: "Dashboard", path: "/dashboard" }]
+      : [{ icon: Layout, label: "Dashboard", path: "/dashboard" }];
 
   return (
-    <nav 
+    <nav
       className={`fixed w-full top-0 z-50 transition-all duration-300 ${
         isLandingPage && !isScrolled
-          ? isOpen ? 'bg-black/90' : 'bg-transparent'
-          : 'bg-white shadow-md'
+          ? isOpen
+            ? "bg-black/90"
+            : "bg-transparent"
+          : "bg-white shadow-md"
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -121,31 +155,38 @@ const Navbar = () => {
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
               <NavLink to="/" className="flex items-center space-x-2">
-                <img src={logo} alt="The Germany Jobs Logo" className="h-22 w-24" />
+                <img
+                  src={logo}
+                  alt="The Germany Jobs Logo"
+                  className="h-22 w-24"
+                />
               </NavLink>
             </div>
-            
+
             {/* Desktop Navigation */}
             <div className="hidden md:ml-6 md:flex md:space-x-4">
-              {navItems.map((item) => (
+              {navItems.map((item) =>
                 item.blocked ? null : (
-                <NavLink
-                  key={item.path}
-                  to={item.path}
-                  target={item.target}
-                  className={({ isActive }) =>
-                    `relative inline-flex items-center px-3 py-2 text-sm font-medium transition-colors duration-200 ${
-                      isActive
-                        ? isLandingPage && !isScrolled ? 'text-white' : 'text-indigo-600'
-                        : isLandingPage && !isScrolled
-                          ? 'text-gray-100 hover:text-white'
-                          : 'text-gray-700 hover:text-indigo-600'
-                    } before:absolute before:bottom-0 before:left-0 before:h-0.5 before:w-full before:origin-right before:scale-x-0 before:bg-current before:transition-transform before:duration-200 hover:before:origin-left hover:before:scale-x-100`
-                  }
-                >
-                  {item.label}
-                </NavLink>
-                )))}
+                  <NavLink
+                    key={item.path}
+                    to={item.path}
+                    target={item.target}
+                    className={({ isActive }) =>
+                      `relative inline-flex items-center px-3 py-2 text-sm font-medium transition-colors duration-200 ${
+                        isActive
+                          ? isLandingPage && !isScrolled
+                            ? "text-white"
+                            : "text-indigo-600"
+                          : isLandingPage && !isScrolled
+                          ? "text-gray-100 hover:text-white"
+                          : "text-gray-700 hover:text-indigo-600"
+                      } before:absolute before:bottom-0 before:left-0 before:h-0.5 before:w-full before:origin-right before:scale-x-0 before:bg-current before:transition-transform before:duration-200 hover:before:origin-left hover:before:scale-x-100`
+                    }
+                  >
+                    {item.label}
+                  </NavLink>
+                )
+              )}
             </div>
           </div>
 
@@ -157,18 +198,32 @@ const Navbar = () => {
                   onClick={() => setShowProfileMenu(!showProfileMenu)}
                   className={`flex items-center space-x-2 px-4 py-2 text-sm font-medium transition-colors duration-200 ${
                     isLandingPage && !isScrolled
-                      ? 'text-white hover:text-gray-200'
-                      : 'text-gray-700 hover:text-indigo-600'
+                      ? "text-white hover:text-gray-200"
+                      : "text-gray-700 hover:text-indigo-600"
                   }`}
                 >
-                  <div className={`h-8 w-8 rounded-full flex items-center justify-center ${
-                    isLandingPage && !isScrolled ? 'bg-white/20' : 'bg-indigo-100'
-                  }`}>
-                    <User className={`h-5 w-5 ${
-                      isLandingPage && !isScrolled ? 'text-white' : 'text-indigo-600'
-                    }`} />
+                  <div
+                    className={`h-8 w-8 rounded-full flex items-center justify-center ${
+                      isLandingPage && !isScrolled
+                        ? "bg-white/20"
+                        : "bg-indigo-100"
+                    }`}
+                  >
+                    <User
+                      className={`h-5 w-5 ${
+                        isLandingPage && !isScrolled
+                          ? "text-white"
+                          : "text-indigo-600"
+                      }`}
+                    />
                   </div>
-                  <span>{profile && profile.full_name!=='' && profile.full_name!==null ? profile.full_name : user.email?.split('@')[0]}</span>
+                  <span>
+                    {profile &&
+                    profile.full_name !== "" &&
+                    profile.full_name !== null
+                      ? profile.full_name
+                      : user.email?.split("@")[0]}
+                  </span>
                   <ChevronDown className="h-4 w-4" />
                 </button>
 
@@ -201,7 +256,9 @@ const Navbar = () => {
                         ) : (
                           <LogOut className="h-4 w-4" />
                         )}
-                        <span>{isSigningOut ? 'Signing out...' : 'Sign out'}</span>
+                        <span>
+                          {isSigningOut ? "Signing out..." : "Sign out"}
+                        </span>
                       </button>
                     </div>
                   </div>
@@ -213,8 +270,8 @@ const Navbar = () => {
                   to="/signin"
                   className={`text-sm font-medium transition-colors duration-200 ${
                     isLandingPage && !isScrolled
-                      ? 'text-white hover:text-gray-200'
-                      : 'text-gray-700 hover:text-indigo-600'
+                      ? "text-white hover:text-gray-200"
+                      : "text-gray-700 hover:text-indigo-600"
                   }`}
                 >
                   Sign in
@@ -223,8 +280,8 @@ const Navbar = () => {
                   to="/signup"
                   className={`inline-flex items-center px-4 py-2 border text-sm font-medium rounded-md shadow-sm transition-colors duration-200 ${
                     isLandingPage && !isScrolled
-                      ? 'border-white text-white hover:bg-white hover:text-indigo-600'
-                      : 'border-transparent text-white bg-indigo-600 hover:bg-indigo-700'
+                      ? "border-white text-white hover:bg-white hover:text-indigo-600"
+                      : "border-transparent text-white bg-indigo-600 hover:bg-indigo-700"
                   }`}
                 >
                   Get Started
@@ -239,8 +296,8 @@ const Navbar = () => {
               onClick={toggleMenu}
               className={`inline-flex items-center justify-center p-2 rounded-md focus:outline-none transition-colors duration-200 ${
                 isLandingPage && !isScrolled
-                  ? 'text-white hover:text-gray-200 hover:bg-white/10'
-                  : 'text-gray-700 hover:text-indigo-600 hover:bg-indigo-50'
+                  ? "text-white hover:text-gray-200 hover:bg-white/10"
+                  : "text-gray-700 hover:text-indigo-600 hover:bg-indigo-50"
               }`}
             >
               {isOpen ? (
@@ -266,10 +323,12 @@ const Navbar = () => {
                 className={({ isActive }) =>
                   `block px-3 py-2 rounded-md text-base font-medium ${
                     isActive
-                      ? isLandingPage && !isScrolled ? 'text-white' : 'text-indigo-600'
+                      ? isLandingPage && !isScrolled
+                        ? "text-white"
+                        : "text-indigo-600"
                       : isLandingPage && !isScrolled
-                        ? 'text-gray-100 hover:text-whit'
-                        : 'text-gray-700 hover:text-indigo-600'
+                      ? "text-gray-100 hover:text-whit"
+                      : "text-gray-700 hover:text-indigo-600"
                   } transition-colors duration-200`
                 }
               >
@@ -283,8 +342,8 @@ const Navbar = () => {
                   onClick={toggleMenu}
                   className={`block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 ${
                     isLandingPage && !isScrolled
-                      ? 'text-white hover:text-gray-200'
-                      : 'text-gray-700 hover:text-indigo-600'
+                      ? "text-white hover:text-gray-200"
+                      : "text-gray-700 hover:text-indigo-600"
                   }`}
                 >
                   Sign in
@@ -294,8 +353,8 @@ const Navbar = () => {
                   onClick={toggleMenu}
                   className={`block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 ${
                     isLandingPage && !isScrolled
-                      ? 'text-white hover:text-gray-200'
-                      : 'text-white bg-indigo-600 hover:bg-indigo-700'
+                      ? "text-white hover:text-gray-200"
+                      : "text-white bg-indigo-600 hover:bg-indigo-700"
                   }`}
                 >
                   Get Started
@@ -307,23 +366,45 @@ const Navbar = () => {
             <div className="pt-4 pb-3 border-t border-gray-200">
               <div className="flex items-center px-5">
                 <div className="flex-shrink-0">
-                  <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
-                    isLandingPage && !isScrolled ? 'bg-white/20' : 'bg-indigo-100'
-                  }`}>
-                    <User className={`h-6 w-6 ${
-                      isLandingPage && !isScrolled ? 'text-white' : 'text-indigo-600'
-                    }`} />
+                  <div
+                    className={`h-10 w-10 rounded-full flex items-center justify-center ${
+                      isLandingPage && !isScrolled
+                        ? "bg-white/20"
+                        : "bg-indigo-100"
+                    }`}
+                  >
+                    <User
+                      className={`h-6 w-6 ${
+                        isLandingPage && !isScrolled
+                          ? "text-white"
+                          : "text-indigo-600"
+                      }`}
+                    />
                   </div>
                 </div>
                 <div className="ml-3">
-                  <div className={`text-base font-medium ${
-                    isLandingPage && !isScrolled ? 'text-white' : 'text-gray-800'
-                  }`}>
-                    {profile && profile.full_name!=='' && profile.full_name!==null ? profile.full_name : user.email?.split('@')[0]}
+                  <div
+                    className={`text-base font-medium ${
+                      isLandingPage && !isScrolled
+                        ? "text-white"
+                        : "text-gray-800"
+                    }`}
+                  >
+                    {profile &&
+                    profile.full_name !== "" &&
+                    profile.full_name !== null
+                      ? profile.full_name
+                      : user.email?.split("@")[0]}
                   </div>
-                  <div className={`text-sm font-medium ${
-                    isLandingPage && !isScrolled ? 'text-gray-100' : 'text-gray-500'
-                  }`}>{user.email}</div>
+                  <div
+                    className={`text-sm font-medium ${
+                      isLandingPage && !isScrolled
+                        ? "text-gray-100"
+                        : "text-gray-500"
+                    }`}
+                  >
+                    {user.email}
+                  </div>
                 </div>
               </div>
               <div className="mt-3 px-2 space-y-1">
@@ -334,8 +415,8 @@ const Navbar = () => {
                     onClick={toggleMenu}
                     className={`block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 ${
                       isLandingPage && !isScrolled
-                        ? 'text-white hover:text-gray-200'
-                        : 'text-gray-700 hover:text-indigo-600'
+                        ? "text-white hover:text-gray-200"
+                        : "text-gray-700 hover:text-indigo-600"
                     }`}
                   >
                     {item.label}
@@ -346,11 +427,11 @@ const Navbar = () => {
                   disabled={isSigningOut}
                   className={`w-full text-left px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 ${
                     isLandingPage && !isScrolled
-                      ? 'text-white hover:text-gray-200'
-                      : 'text-gray-700 hover:text-indigo-600'
+                      ? "text-white hover:text-gray-200"
+                      : "text-gray-700 hover:text-indigo-600"
                   } disabled:opacity-50`}
                 >
-                  {isSigningOut ? 'Signing out...' : 'Sign out'}
+                  {isSigningOut ? "Signing out..." : "Sign out"}
                 </button>
               </div>
             </div>

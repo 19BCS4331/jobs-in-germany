@@ -236,7 +236,7 @@ const Contact: React.FC = () => {
                     <div>
                       <h3 className="text-lg font-medium text-gray-900">Send us a Mail</h3>
                       <p className="mt-1 text-gray-600 cursor-pointer hover:text-indigo-600" onClick={() => window.open('mailto:info@thegermanyjobs.com', '_blank')}>info@thegermanyjobs.com</p>
-                      <p className="mt-1 text-gray-600 cursor-pointer hover:text-indigo-600" onClick={() => window.open('mailto:seema@maraekat.com', '_blank')}>seema@maraekat.com</p>
+                      <p className="mt-1 text-gray-600 cursor-pointer hover:text-indigo-600" onClick={() => window.open('mailto:hr@maraekat.com', '_blank')}>hr@maraekat.com</p>
                     </div>
                   </div>
                 </motion.div>
@@ -279,6 +279,10 @@ const Contact: React.FC = () => {
                       <p className="mt-1 text-gray-600 cursor-pointer hover:text-indigo-600" onClick={() => window.open('tel:+917900168820', '_blank')}>+91 7900168820</p>
                       </div>
                       <p className="mt-1 text-gray-600 cursor-pointer hover:text-indigo-600" onClick={() => window.open('tel:+9102266587777', '_blank')}>+91 022-66587777</p>
+                      <p className="mt-1 text-gray-600 cursor-pointer hover:text-indigo-600" onClick={() => window.open('tel:+9102266587777', '_blank')}>+91 022-35132123</p>
+                      <p className="mt-1 text-gray-600 cursor-pointer hover:text-indigo-600" onClick={() => window.open('tel:+9102266587777', '_blank')}>+91 022-35110087</p>
+                      <p className="mt-1 text-gray-600 cursor-pointer hover:text-indigo-600" onClick={() => window.open('tel:+9102266587777', '_blank')}>+91 022-35113427</p>
+                      <p className="mt-1 text-gray-600 cursor-pointer hover:text-indigo-600" onClick={() => window.open('tel:+9102266587777', '_blank')}>+91 022-35115270</p>
                     </div>
                   </div>
                 </motion.div>

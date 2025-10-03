@@ -45,6 +45,8 @@ import JobPostingForm from "./pages/dashboard/JobPostingForm";
 import NewCompany from "./pages/company/New";
 import LearnGerman from "./pages/LearnGerman";
 import JobsView from "./pages/dashboard/JobsView";
+import StudyInGermany from "./pages/StudyPrograms";
+import AboutUs from "./pages/AboutUs";
 
 // Protected route component
 const ProtectedRoute = ({
@@ -114,6 +116,24 @@ function App() {
                 element={
                   <>
                     <Resources />
+                    {/* <Footer /> */}
+                  </>
+                }
+              />
+              <Route
+                path="/study-programs"
+                element={
+                  <>
+                    <StudyInGermany />
+                    {/* <Footer /> */}
+                  </>
+                }
+              />
+              <Route
+                path="/about-us"
+                element={
+                  <>
+                    <AboutUs />
                     {/* <Footer /> */}
                   </>
                 }
