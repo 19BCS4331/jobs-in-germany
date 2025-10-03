@@ -203,7 +203,7 @@ const Contact: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ type: "spring", stiffness: 200, damping: 25, delay: 0.2 }}
             >
-              Have questions about jobs in Germany? Need assistance with your application?
+              Have questions about jobs and studies in Germany? Need assistance with your application?
               Our team is ready to support you every step of the way.
             </motion.p>
           </div>
